@@ -7,13 +7,10 @@ from employees.models import Employee
 class EmployeeSalary(models.Model):
     salary_id = models.CharField(primary_key = True, max_length = 50)
     employee = models.ForeignKey(Employee, to_field = 'employee_id', db_column = 'employee_id', on_delete = models.DO_NOTHING)
-
     base_salary = models.DecimalField(max_digits = 10, decimal_places = 2, null = True, blank = True)
     daily_rate = models.DecimalField(max_digits = 10, decimal_places = 2, null = True, blank = True)
-
     contract_start_date = models.DateField(null = True, blank = True)
     contract_end_date = models.DateField(null = True, blank = True)
-
     effective_date = models.DateField(auto_now_add = True)
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
