@@ -1,7 +1,10 @@
 from django.urls import path
-from .views import DepartmentListCreateAPIView, DepartmentDestroyAPIView
+from . import views
+
+app_name = 'departments'
 
 urlpatterns = [
-    path('departments/', DepartmentListCreateAPIView.as_view(), name = 'department-list-create'),
-    path('departments/<str:dept_id>/', DepartmentDestroyAPIView.as_view(), name = 'department-delete'),
+    path('<str:pk>/archive/', views.archive_department, name='department_archive'),
+    path('archived/', views.ArchivedDepartmentListView.as_view(), name='archived_departments'),  # archived list
+    path('<str:pk>/unarchive/', views.unarchive_department, name='department_unarchive'),  # unarchive logic
 ]

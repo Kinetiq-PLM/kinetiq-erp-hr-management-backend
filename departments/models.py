@@ -4,6 +4,7 @@ import uuid
 class Department(models.Model):
     dept_id = models.CharField(primary_key = True, max_length = 20, editable = False)
     dept_name = models.CharField(max_length = 100, unique = True)
+    is_archived = models.BooleanField(default=False)  # added archive logic
 
     def save(self, *args, **kwargs):
         if not self.dept_id:
