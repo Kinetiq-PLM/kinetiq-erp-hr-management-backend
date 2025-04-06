@@ -1,6 +1,9 @@
 from django.db import models
+from django.utils import timezone
 import uuid
-from datetime import date
+from departments.models import Department
+from positions.models import Position
+
 
 class Employee(models.Model):
     EMPLOYMENT_TYPES = [
@@ -14,22 +17,28 @@ class Employee(models.Model):
         ('Inactive', 'Inactive'),
     ]
 
-    employee_id = models.CharField(max_length = 255, primary_key = True, editable = False, unique = True)
-    dept_id = models.CharField(max_length = 255)
-    position_id = models.CharField(max_length = 255)
+    employee_id = models.CharField(
+        max_length = 255,
+        primary_key = True,
+        editable = False,
+        unique = True,
+    )
+    user_id = models.CharField(max_length = 255, blank = True, null = True)
+    dept = models.ForeignKey(Department, on_delete = models.CASCADE, null = True, blank = True)
+    position = models.ForeignKey(Position, on_delete = models.CASCADE, null = True, blank = True)
     first_name = models.CharField(max_length = 50)
     last_name = models.CharField(max_length = 50)
     phone = models.CharField(max_length = 20)
     employment_type = models.CharField(max_length = 20, choices = EMPLOYMENT_TYPES)
-    status = models.CharField(max_length = 20, choices=STATUS_CHOICES, default = 'Active')
+    status = models.CharField(max_length = 20, choices = STATUS_CHOICES, default = 'Active')
     reports_to = models.CharField(max_length = 255, blank = True, null = True)
     is_supervisor = models.BooleanField(default = False)
-    created_at = models.DateTimeField(auto_now_add = True)
+    created_at = models.DateTimeField(default = timezone.now)
     updated_at = models.DateTimeField(auto_now = True)
 
     def save(self, *args, **kwargs):
         if not self.employee_id:
-            self.employee_id = f"EMP-{uuid.uuid4().hex[:6]}"
+            self.employee_id = f"EMP-{uuid.uuid4().hex[:6].upper()}"
         super().save(*args, **kwargs)
 
     def __str__(self):
