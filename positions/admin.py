@@ -11,3 +11,5 @@ class PositionAdmin(admin.ModelAdmin):
     list_filter = ('employment_type', 'is_active')
     search_fields = ('position_title', 'position_id', 'salary_grade')
     readonly_fields = ('position_id', 'created_at', 'updated_at')
+
+# might add

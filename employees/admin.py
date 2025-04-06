@@ -10,3 +10,5 @@ class EmployeeAdmin(admin.ModelAdmin):
     list_filter = ('employment_type', 'status', 'is_supervisor')
     search_fields = ('first_name', 'last_name', 'employee_id', 'phone')
     readonly_fields = ('employee_id', 'created_at', 'updated_at')
+
+# needs to be retested 

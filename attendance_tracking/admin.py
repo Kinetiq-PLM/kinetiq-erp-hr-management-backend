@@ -24,7 +24,7 @@ class AttendanceAdmin(admin.ModelAdmin):
     search_fields = ("attendance_id", "employee_id", "status")
     list_filter = ("status", "updated_at")
 
-    # update: added names and dept name
+    # update: added names and the dept name
 
     def get_first_name(self, obj):
         employee = Employee.objects.filter(employee_id=obj.employee_id).first()

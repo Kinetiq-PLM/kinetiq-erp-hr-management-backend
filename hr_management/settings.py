@@ -102,6 +102,7 @@ WSGI_APPLICATION = 'hr_management.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# ALWAYS THIS (THE DATABASE)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',

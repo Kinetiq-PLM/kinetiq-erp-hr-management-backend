@@ -38,7 +38,7 @@ class DepartmentAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.filter(is_archived = False)
 
-    # remove 'is_archived' from admin form (so it won't show in form fields)
+    # remove 'is_archived' from admin form (so it won't show in form fields) ewan bat nag appear wahahaha
     def get_fields(self, request, obj=None):
         fields = super().get_fields(request, obj)
         if 'is_archived' in fields:

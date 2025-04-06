@@ -45,3 +45,5 @@ class EmployeePerformance(models.Model):
 
     def __str__(self):
         return f'{self.performance_id} - {self.employee_id}'
+
+        # forgot the computation

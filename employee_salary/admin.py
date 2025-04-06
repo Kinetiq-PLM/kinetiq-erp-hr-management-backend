@@ -43,7 +43,7 @@ class EmployeeSalaryAdmin(admin.ModelAdmin):
         'created_at', 'updated_at'
     )
     search_fields = ('salary_id', 'employee__employee_id')
-
+    # unclickable    
     def get_readonly_fields(self, request, obj=None):
         return ('employee',) if obj else ()
 

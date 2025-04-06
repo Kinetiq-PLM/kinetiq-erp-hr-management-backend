@@ -47,7 +47,7 @@ class WorkforceAllocationAdmin(admin.ModelAdmin):
         return obj.hr_approver.employee_id if obj.hr_approver else "-"
     get_hr_approver.short_description = "HR Approver"
 
-    # added new columns
+    # added new columns and might add more
 
     def get_application_status(self, obj):
         return obj.status
