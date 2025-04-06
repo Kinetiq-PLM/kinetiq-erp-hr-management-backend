@@ -2,8 +2,8 @@ from django.db import models
 import uuid
 
 class Department(models.Model):
-    dept_id    = models.CharField(primary_key = True, max_length = 20, editable = False)
-    dept_name  = models.CharField(max_length = 100, unique = True)
+    dept_id = models.CharField(primary_key = True, max_length = 20, editable = False)
+    dept_name = models.CharField(max_length = 100, unique = True)
 
     def save(self, *args, **kwargs):
         if not self.dept_id:
