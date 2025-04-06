@@ -17,7 +17,7 @@ class DepartmentSuperiorAdmin(admin.ModelAdmin):
     'hierarchy_level', 
 )
     # grayed out update for uneditable id and superior job title
-    def get_readonly_fields(self, request, obj=None):
+    def get_readonly_fields(self, request, obj = None):
         if obj:
             return ['dept_id', 'superior_job_title']
         return []
@@ -32,21 +32,21 @@ class DepartmentSuperiorAdmin(admin.ModelAdmin):
     get_dept_name.short_description = 'Department Name'
 
     def get_employee_id(self, obj):
-        employee = Employee.objects.filter(dept_id=obj.dept_id, is_supervisor=True).first()
+        employee = Employee.objects.filter(dept_id=obj.dept_id, is_supervisor = True).first()
         return employee.employee_id if employee else "-"
     get_employee_id.short_description = 'Employee ID'
 
     def get_position_id(self, obj):
-        employee = Employee.objects.filter(dept_id=obj.dept_id, is_supervisor=True).first()
+        employee = Employee.objects.filter(dept_id=obj.dept_id, is_supervisor = True).first()
         return employee.position_id if employee else "-"
     get_position_id.short_description = 'Position ID'
 
     def get_first_name(self, obj):
-        employee = Employee.objects.filter(dept_id=obj.dept_id, is_supervisor=True).first()
+        employee = Employee.objects.filter(dept_id=obj.dept_id, is_supervisor = True).first()
         return employee.first_name if employee else "-"
     get_first_name.short_description = 'First Name'
 
     def get_last_name(self, obj):
-        employee = Employee.objects.filter(dept_id=obj.dept_id, is_supervisor=True).first()
+        employee = Employee.objects.filter(dept_id=obj.dept_id, is_supervisor = True).first()
         return employee.last_name if employee else "-"
     get_last_name.short_description = 'Last Name'
