@@ -4,7 +4,7 @@ from employees.models import Employee
 from positions.models import Position
 
 class DepartmentSuperior(models.Model):
-    dept = models.ForeignKey(Department, db_column='dept_id', on_delete=models.CASCADE)
+    dept = models.ForeignKey(Department, db_column='dept_id', on_delete=models.CASCADE) # undecided
     employee = models.ForeignKey(Employee, db_column='employee_id', on_delete=models.CASCADE)
     position = models.ForeignKey(Position, db_column='position_id', on_delete=models.CASCADE)
     superior_job_title = models.CharField(max_length=100)
