@@ -7,12 +7,12 @@ A Django-based backend system for managing human resources including employee re
 ## Featured Submodules
 
 ### Human Resources Management
-- **Department**: Complete
-- **Department Superiors**: Complete
-- **Positions**: Complete
-- **Employees**: Complete
-- **Employee Performance**: Complete
-- **Employee Salary**: Complete
+- **Department**: [Complete]
+- **Department Superiors**: [Complete]
+- **Positions**: [Complete]
+- **Employees**: [Complete]
+- **Employee Performance**: [Complete]
+- **Employee Salary**: [Complete]
 
 ### Workforce Management
 - **Attendance Tracking**: ~70% Done
@@ -46,7 +46,7 @@ cd kinetiq-erp-hr-management-backend
 
 ```bash
 python -m venv env
-source env/bin/activate
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 ---
