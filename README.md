@@ -33,7 +33,7 @@ A Django-based backend system for managing human resources including employee re
 
 ---
 
-## 🧬 Clone the Repository
+## Clone the Repository
 
 ```bash
 git clone https://github.com/Kinetiq-PLM/kinetiq-erp-hr-management-backend.git
@@ -84,7 +84,7 @@ DATABASES = {
 
 ---
 
-## 🛠️ Database Setup
+## Database Setup
 
 Make sure PostgreSQL is installed and running.
 
@@ -99,7 +99,7 @@ psql -U <your_username> kinetiq_db < db/kinetiq-hrm.sql
 
 ---
 
-## 🚀 Run the Server
+## Run the Server
 
 ```bash
 python manage.py runserver
