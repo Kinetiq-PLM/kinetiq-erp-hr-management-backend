@@ -1,26 +1,35 @@
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import csrf_exempt
-from employees.models import Employee
+from rest_framework import generics, permissions, status, viewsets
+from rest_framework.views import APIView
 from rest_framework import viewsets
-from .models import EmployeeSalary
-from .serializers import EmployeeSalarySerializer
+from .models import Employee_Salary
+from .serializers import Employee_Salary_Serializer
+# from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 
+class IsHRMember(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if not request.user.has_perm('employee_salary.view_employee_salary'):
+            raise PermissionDenied("You do not have permission to view this resource.")
+        return True
 
-@login_required
-@csrf_exempt
-def get_employment_type(request):
-    employee_id = request.GET.get('employee_id')
-    if not employee_id:
-        return JsonResponse({'error': 'No employee ID provided'}, status=400)
+class Employee_Salary_ViewSet(viewsets.ModelViewSet):
+     # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Employee_Salary.objects.all()
+    serializer_class = Employee_Salary_Serializer
 
-    try:
-        employee = Employee.objects.get(employee_id=employee_id)
-        return JsonResponse({'employment_type': employee.employment_type})
-    except Employee.DoesNotExist:
-        return JsonResponse({'error': 'Employee not found'}, status=404)
+class Employee_Salary_ListCreateAPIView(generics.ListCreateAPIView):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Employee_Salary.objects.all()
+    serializer_class = Employee_Salary_Serializer
 
+class Employee_Salary_RetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Employee_Salary.objects.all()
+    serializer_class = Employee_Salary_Serializer
+    lookup_field = 'pk'
 
-class EmployeeSalaryViewSet(viewsets.ModelViewSet):
-    queryset = EmployeeSalary.objects.all()
-    serializer_class = EmployeeSalarySerializer
+class Employee_Salary_DestroyAPIView(generics.DestroyAPIView):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Employee_Salary.objects.all()
+    serializer_class = Employee_Salary_Serializer
+    lookup_field = 'salary_id'

@@ -1,7 +1,6 @@
 from django.contrib import admin
+from django import forms
 from .models import Position
-from django.urls import reverse
-from django.utils.html import format_html
 
 @admin.register(Position)
 class PositionAdmin(admin.ModelAdmin):
@@ -9,17 +8,17 @@ class PositionAdmin(admin.ModelAdmin):
         'position_id',
         'position_title',
         'salary_grade',
-        'employment_type',
         'min_salary',
         'max_salary', 
+        'employment_type',
         'typical_duration_days', 
         'is_active',
         'created_at', 
         'updated_at',
-        'actions_column',
+        'is_archived',
     )
     list_filter = ('employment_type', 'is_active')
-    list_display_links = None  # made ALL columns non-clickable (since we have custom edit button)
+    # list_display_links = None
     search_fields = ('position_title', 'position_id', 'salary_grade')
     readonly_fields = ('position_id', 'created_at', 'updated_at')
 
@@ -27,34 +26,19 @@ class PositionAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.filter(is_archived=False)
+        return qs.filter(is_archived = False)
 
-    def get_fields(self, request, obj=None):
+    def get_fields(self, request, obj = None):
         fields = super().get_fields(request, obj)
         if 'is_archived' in fields:
             fields.remove('is_archived')
         return fields
-
-    def actions_column(self, obj):
-        edit_url = reverse('admin:positions_position_change', args=[obj.pk])
-        archive_url = reverse('positions:positions_archive', args=[obj.pk])
-        return format_html(
-            '''
-            <div style="text-align: right;">
-                <span style="cursor: pointer;">⋮</span>
-                <div style="display: inline-block; margin-left: 5px;">
-                    <a href="{}">Edit</a> | 
-                    <a href="{}">Archive</a>
-                </div>
-            </div>
-            ''',
-            edit_url,
-            archive_url
-        )
-
-    actions_column.short_description = 'Actions'
     
-    def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
-        extra_context['view_archived_url'] = reverse('positions:archived_positions')
-        return super().changelist_view(request, extra_context=extra_context)
+    # hide the fuckign chnag reason xd d ko matnggal HHAHAHA
+    def get_form(self, request, obj = None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        
+        if obj is None:
+            form.base_fields['change_reason'].required = False
+            form.base_fields['change_reason'].widget = forms.HiddenInput()
+        return form

@@ -1,11 +1,12 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import EmployeeSalaryViewSet, get_employment_type
+from django.urls import path
+from .views import (
+    Employee_Salary_ListCreateAPIView,
+    Employee_Salary_RetrieveUpdateDestroyAPIView,
+)
 
-router = DefaultRouter()
-router.register(r'employee_salary', EmployeeSalaryViewSet)
+app_name = 'employee_salary'
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path('get_employment_type/', get_employment_type, name='get_employment_type'),
+    path('', Employee_Salary_ListCreateAPIView.as_view(), name = 'employee_salary_list_create'),
+    path('<str:pk>/', Employee_Salary_RetrieveUpdateDestroyAPIView.as_view(), name = 'employee_salary_detail'),
 ]

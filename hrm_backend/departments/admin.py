@@ -1,78 +1,68 @@
 from django.contrib import admin
-from django.urls import reverse
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
-from django.shortcuts import redirect
 from .models import Department
+from django.urls import reverse
+from django import forms
+from django.utils.safestring import mark_safe
+from django.contrib.admin import SimpleListFilter
+from simple_history.admin import SimpleHistoryAdmin
+from simple_history.utils import update_change_reason
 
 
-# added list filtering (2 only ? if there's more then add below the next one (Dept_id), edit the fkign lookups and queryset)
-class DepartmentFilter(admin.SimpleListFilter):
-    title = 'Filter by'
-    parameter_name = 'filter_by'
+# for filtering, some sub modules have these
+class ActiveDepartment_Filter(SimpleListFilter):
+    title = 'Department'
+    parameter_name = 'dept'
 
     def lookups(self, request, model_admin):
-        return (
-            ('dept_name', 'Department Name'),
-            ('dept_id', 'Department ID'),
-        )
+        active_departments = Department.objects.filter(is_archived = False)
+        return [(dept.pk, dept.dept_name) for dept in active_departments]
 
     def queryset(self, request, queryset):
-        filter_by = self.value()
-        if filter_by == 'dept_name':
-            return queryset.order_by('dept_name')
-        if filter_by == 'dept_id':
-            return queryset.order_by('dept_id')
+        if self.value():
+            return queryset.filter(dept__pk=self.value())
         return queryset
 
-
 @admin.register(Department)
-class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ('dept_id_display', 'dept_name', 'actions_column') # added new display, columns vertical dots
-    list_display_links = None  # made ALL columns non-clickable (since we have custom edit button)
+class Department_Admin(SimpleHistoryAdmin):
+    list_display = ('dept_id_display', 'dept_name',)
     search_fields = ('dept_id', 'dept_name')
-    list_filter = (DepartmentFilter,)
+    list_filter = ('dept_name',)
 
-    # is_archived check button hide
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.filter(is_archived = False)
+        return qs.filter(is_archived=False)
 
-    # remove 'is_archived' from admin form (so it won't show in form fields)
-    def get_fields(self, request, obj=None):
+    def get_fields(self, request, obj = None):
         fields = super().get_fields(request, obj)
         if 'is_archived' in fields:
             fields.remove('is_archived')
         return fields
 
     def dept_id_display(self, obj):
-        return mark_safe(f'{obj.dept_id}') 
-
+        return mark_safe(f'{obj.dept_id}')
     dept_id_display.short_description = 'Department ID'
 
     def changelist_view(self, request, extra_context = None):
         extra_context = extra_context or {}
         extra_context['view_archived_url'] = reverse('departments:archived_departments')
-        return super().changelist_view(request, extra_context=extra_context)
+        return super().changelist_view(request, extra_context = extra_context)
 
-    # 3 vertical dots
-    def actions_column(self, obj):
-        edit_url = reverse('admin:departments_department_change', args = [obj.pk])
-        archive_url = reverse('departments:department_archive', args = [obj.pk])
+    def get_form(self, request, obj = None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        
+        if obj is None:
+            form.base_fields['change_reason'].required = False
+            form.base_fields['change_reason'].widget = forms.HiddenInput()
+        return form
 
-        return format_html(
-            '''
-            <div style="text-align: right;">
-                <span style="cursor: pointer;">⋮</span>
-                <div style="display: inline-block; margin-left: 5px;">
-                    <a href = "{}">Edit</a> | 
-                    <a href = "{}">Archive</a>
-                </div>
-            </div>
-            ''',
-            edit_url,
-            archive_url
-        )
+    def save_model(self, request, obj, form, change):
+        if change:
+            reason = request.POST.get('change_reason', 'No reason provided')
 
-    actions_column.short_description = ''
-
+            super().save_model(request, obj, form, change)
+            if obj.history.first():
+                update_change_reason(obj, reason)
+        else:
+            super().save_model(request, obj, form, change)
+            if not obj.history.first():
+                obj.history.create(user=request.user, change_reason = "Department added")

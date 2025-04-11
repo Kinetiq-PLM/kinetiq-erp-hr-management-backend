@@ -3,6 +3,9 @@
 {% block content %}
 <h1>Archived Departments</h1>
 
+<!-- Update the URL to the admin changelist page -->
+<a href="{% url 'admin:departments_department_changelist' %}" class="btn btn-outline-info mb-3">View Active Departments</a>
+
 <table class="adminlist">
     <thead>
         <tr>
@@ -17,7 +20,7 @@
             <td>{{ dept.dept_id }}</td>
             <td>{{ dept.dept_name }}</td>
             <td>
-                <a href="{% url 'departments:department_unarchive' dept.pk %}">Unarchive</a>
+                <a href="{% url 'departments:department_unarchive' dept.pk %}" class="btn btn-sm btn-success">Unarchive</a>
             </td>
         </tr>
         {% empty %}
@@ -27,7 +30,4 @@
         {% endfor %}
     </tbody>
 </table>
-
-<a href="{% url 'admin:departments_department_changelist' %}">Back to Active Departments</a>
-
 {% endblock %}

@@ -1,45 +1,92 @@
-from rest_framework import generics
-from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
-from django.contrib import messages
-from django.views import View
-from rest_framework import viewsets, permissions
+from rest_framework import generics, permissions, status, viewsets
+from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from .models import Position
-from .serializers import PositionSerializer
+from .serializers import (
+    Position_Serializer,
+    Position_History_Serializer,
+)
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 
 class IsHRMember(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.has_perm('positions.view_position')
+        if not request.user.has_perm('positions.view_positions'):
+            raise PermissionDenied("You do not have permission to view this resource.")
+        return True
 
-class PositionViewSet(viewsets.ModelViewSet):
-    queryset = Position.objects.all().order_by('-created_at')
-    serializer_class = PositionSerializer
-    permission_classes = [IsHRMember]
+class Position_ViewSet(viewsets.ModelViewSet):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Position.objects.all()
+    serializer_class = Position_Serializer
 
-# dont delete any here, this is for archiving and unarchiving
-def archive_positions(request, pk):
-    positions = get_object_or_404(Position, pk=pk)
-    positions.is_archived = True
-    positions.save()
+    def get_queryset(self):
+        return Position.objects.filter(is_archived = False)
 
-    messages.success(request, f'Position "{positions.position_title}" archived successfully.')
-    return redirect(reverse('admin:%s_%s_changelist' % (Position._meta.app_label, Position._meta.model_name)))
+class Position_ListCreateAPIView(generics.ListCreateAPIView):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Position.objects.all()
+    serializer_class = Position_Serializer
 
-def positions(request, pk):
-    positions = get_object_or_404(Position, pk=pk)
-    positions.is_archived = False
-    positions.save()
+    def get_queryset(self):
+        return Position.objects.filter(is_archived = False)
 
-    messages.success(request, f'Position "{positions.position_title}" unarchived successfully.')
-    return redirect(reverse('positions:archived_positions'))
+class Position_RetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Position.objects.all()
+    serializer_class = Position_Serializer
+    lookup_field = 'pk'
 
+class Position_DestroyAPIView(generics.DestroyAPIView):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Position.objects.all()
+    serializer_class = Position_Serializer
+    lookup_field = 'position_id'
 
-# goes to the template archieved_positions.html 
-class ArchivedPositionsListView(View):
-    def get(self, request):
-        archived_positions = Position.objects.filter(is_archived = True)
-        context = {
-            'archived_positions': archived_positions,
-        }
-        return render(request, 'admin/positions/archived_positions.html', context)
-    permission_classes = [permissions.AllowAny]
+# ARCHIVE LOGIC 
+class Position_ArchiveAPIView(APIView):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+
+    def post(self, request, pk):
+        position = get_object_or_404(Position, pk = pk)
+        if position.is_archived:
+            return Response({"detail": "Position already archived."}, status = status.HTTP_400_BAD_REQUEST)
+        position.is_archived = True
+        position.save()
+        return Response({"detail": "Position archived successfully."}, status = status.HTTP_200_OK)
+
+class Position_UnarchiveAPIView(APIView):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+
+    def post(self, request, pk):
+        position = get_object_or_404(Position, pk = pk)
+        if not position.is_archived:
+            return Response({"detail": "Position is not archived."}, status = status.HTTP_400_BAD_REQUEST)
+        position.is_archived = False
+        position.save()
+        return Response({"detail": "Position unarchived successfully."}, status = status.HTTP_200_OK)
+
+class Position_ArchiveListAPIView(generics.ListAPIView):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+    serializer_class = Position_Serializer
+
+    def get_queryset(self):
+        return Position.objects.filter(is_archived = True)
+
+# history for each positions
+class Position_HistoryView(APIView):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+
+    def get(self, request, *args, **kwargs):
+        dept_id = kwargs.get('dept_id')
+        if dept_id:
+            try:
+                positions = Position.objects.get(dept_id = dept_id)
+                history = positions.history.all()
+                serializer = Position_History_Serializer(history, many = True)
+                return Response(serializer.data, status = status.HTTP_200_OK)
+            except Position.DoesNotExist:
+                return Response({"detail": "Position not found."}, status = status.HTTP_404_NOT_FOUND)
+        else:
+             return Response({"detail": "Position ID is required."}, status = status.HTTP_400_BAD_REQUEST)

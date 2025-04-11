@@ -2,13 +2,12 @@ from django.contrib import admin
 from django import forms
 from django.urls import path
 from django.http import JsonResponse
-from .models import EmployeeSalary
+from .models import Employee_Salary
 from employees.models import Employee
 
-
-class EmployeeSalaryForm(forms.ModelForm):
+class Employee_Salary_Form(forms.ModelForm):
     class Meta:
-        model = EmployeeSalary
+        model = Employee_Salary
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
@@ -27,22 +26,25 @@ class EmployeeSalaryForm(forms.ModelForm):
             emp_type = None
 
         if emp_type == "Regular":
-            self.fields['contract_start_date'].widget = forms.HiddenInput()
-            self.fields['contract_end_date'].widget = forms.HiddenInput()
             self.fields['daily_rate'].widget = forms.HiddenInput()
+            self.fields['base_salary'].widget = forms.TextInput()
         elif emp_type in ["Seasonal", "Contractual"]:
             self.fields['base_salary'].widget = forms.HiddenInput()
+            self.fields['daily_rate'].widget = forms.TextInput()
 
-
-@admin.register(EmployeeSalary)
-class EmployeeSalaryAdmin(admin.ModelAdmin):
-    form = EmployeeSalaryForm
+@admin.register(Employee_Salary)
+class Employee_Salary_Admin(admin.ModelAdmin):
+    form = Employee_Salary_Form
     list_display = (
-        'salary_id', 'employee', 'base_salary', 'daily_rate',
-        'contract_start_date', 'contract_end_date', 'effective_date',
-        'created_at', 'updated_at'
+        'salary_id',
+        'get_employee_id',
+        'get_employee_name',
+        'base_salary',
+        'daily_rate',
+        'effective_date',
     )
-    search_fields = ('salary_id', 'employee__employee_id')
+    search_fields = ('salary_id', 'employee__employee_id', 'employee__first_name', 'employee__last_name')
+    list_filter = ("effective_date", "daily_rate", "base_salary")
 
     def get_readonly_fields(self, request, obj=None):
         return ('employee',) if obj else ()
@@ -50,7 +52,7 @@ class EmployeeSalaryAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         if not obj:
-            salaried_employees = EmployeeSalary.objects.values_list('employee_id', flat=True)
+            salaried_employees = Employee_Salary.objects.values_list('employee_id', flat=True)
             form.base_fields['employee'].queryset = Employee.objects.exclude(employee_id__in=salaried_employees)
         return form
 
@@ -64,13 +66,15 @@ class EmployeeSalaryAdmin(admin.ModelAdmin):
     def get_employment_type(self, request):
         employee_id = request.GET.get('employee_id')
         try:
-            employee = Employee.objects.get(pk=employee_id)
+            employee = Employee.objects.get(employee_id=employee_id)
             return JsonResponse({'employment_type': employee.employment_type})
         except Employee.DoesNotExist:
             return JsonResponse({'employment_type': None}, status=404)
 
-    class Media:
-        js = [
-            'admin/js/employee_salary-add.js',
-            'admin/js/employee_salary-edit.js',
-        ]
+    def get_employee_id(self, obj):
+        return obj.employee.employee_id
+    get_employee_id.short_description = 'Employee ID'
+
+    def get_employee_name(self, obj):
+        return f"{obj.employee.first_name} {obj.employee.last_name}"
+    get_employee_name.short_description = 'Employee Name'

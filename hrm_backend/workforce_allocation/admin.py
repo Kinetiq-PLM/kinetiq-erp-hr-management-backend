@@ -1,9 +1,9 @@
 from django.contrib import admin
-from .models import WorkforceAllocation
+from .models import Workforce_Allocation
 
 
-@admin.register(WorkforceAllocation)
-class WorkforceAllocationAdmin(admin.ModelAdmin):
+@admin.register(Workforce_Allocation)
+class Workforce_AllocationAdmin(admin.ModelAdmin):
     list_display = (
         "allocation_id",
         "request_id",
@@ -22,7 +22,6 @@ class WorkforceAllocationAdmin(admin.ModelAdmin):
         "start_date",
         "end_date",
     )
-
     search_fields = (
         "allocation_id",
         "request_id",
@@ -30,6 +29,9 @@ class WorkforceAllocationAdmin(admin.ModelAdmin):
         "employee__first_name",
         "employee__last_name",
     )
+
+    list_filter = ("approval_status", "requesting_dept_id",)
+    list_display_links = None
     
     def get_employee_id(self, obj):
         return obj.employee.employee_id if obj.employee else "-"

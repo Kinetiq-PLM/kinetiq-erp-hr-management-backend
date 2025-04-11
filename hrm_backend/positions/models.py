@@ -1,6 +1,8 @@
 from django.db import models
-import uuid
+from django.core.exceptions import ValidationError
+from simple_history.models import HistoricalRecords
 from datetime import date
+import uuid
 
 class Position(models.Model):
     EMPLOYMENT_TYPES = [
@@ -20,6 +22,14 @@ class Position(models.Model):
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
     is_archived = models.BooleanField(default = False)
+
+    history = HistoricalRecords() # history
+    change_reason = models.CharField(max_length=255, blank = True, null = True)
+
+    # validation errors
+    def clean(self):
+        if Position.objects.filter(position_title = self.position_title, is_archived = False).exists():
+            raise ValidationError(f"A position title with the name '{self.position_title}' already exists and is active.")
 
     def save(self, *args, **kwargs):
         if not self.position_id:

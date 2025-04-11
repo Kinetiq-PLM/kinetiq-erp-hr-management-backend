@@ -38,18 +38,21 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     "attendance_tracking",
+    'calendar_dates',
     "department_superiors",
     "departments",
     "employee_leave_balances",
     "employee_performance",
+    'employees.apps.EmployeesConfig',
     "employee_salary",
-    "employees",
     "leave_requests",
     "positions",
     "workforce_allocation",
     "rest_framework",
     "corsheaders",    
-    "django_cognito_jwt"
+    "django_cognito_jwt",
+
+    'simple_history',
 ]
 
 MIDDLEWARE = [
@@ -61,13 +64,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173"
+    "http://localhost:5174",
+    "http://127.0.0.1:5174"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -108,7 +113,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',  # Change this for development
+        'rest_framework.permissions.AllowAny',  # Change this for development
     ),
 }
 
@@ -174,21 +179,19 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Manila' # pinalitan from UTC to asia manila mali orasan sa attendance e
 
 USE_I18N = True
 
 USE_TZ = True
 
-
-# ✅ Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
 
 # Ensure static files are collected properly
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Make sure this directory exists
+   
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"  # This is where collectstatic stores files
 

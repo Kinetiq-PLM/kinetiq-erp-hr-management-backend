@@ -1,25 +1,35 @@
-from django.db import connection
-from rest_framework.views import APIView
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
-from .serializers import EmployeePerformanceViewSerializer
+from rest_framework.views import APIView
+from .models import Employee_Performance
+from .serializers import Employee_Performance_Serializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 
-class EmployeePerformanceViewList(APIView):
-    def get(self, request):
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM employee_performance_view")
-            rows = cursor.fetchall()
+class IsHRMember(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if not request.user.has_perm('employee_performance.view_employee_performance'):
+            raise PermissionDenied("You do not have permission to view this resource.")
+        return True
+        
+class Employee_Performance_ViewSet(viewsets.ModelViewSet):
+    # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Employee_Performance.objects.all()
+    serializer_class = Employee_Performance_Serializer
 
-        data = [
-            {
-                "performance_id": row[0],
-                "employee": row[1],
-                "superior": row[2],
-                "rating": row[3],
-                "bonus_percentage": row[4],
-                "bonus_amount": row[5],
-                "review_date": row[6],
-            }
-            for row in rows
-        ]
-        serializer = EmployeePerformanceViewSerializer(data, many=True)
-        return Response(serializer.data)
+class Employee_Performance_ListCreateAPIView(generics.ListCreateAPIView):
+     # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Employee_Performance.objects.all()
+    serializer_class = Employee_Performance_Serializer
+
+class Employee_Performance_RetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+     # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Employee_Performance.objects.all()
+    serializer_class = Employee_Performance_Serializer
+    lookup_field = 'pk'
+
+class Employee_Performance_DestroyAPIView(generics.DestroyAPIView):
+     # permission_classes = [IsAuthenticated, IsHRMember]
+    queryset = Employee_Performance.objects.all()
+    serializer_class = Employee_Performance_Serializer
+    lookup_field = 'performance_id'

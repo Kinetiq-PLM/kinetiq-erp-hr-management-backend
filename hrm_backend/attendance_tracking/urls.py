@@ -1,9 +1,14 @@
 from django.urls import path
-from .views import AttendanceListCreateAPIView, AttendanceUpdateAPIView
-from . import views
+from .views import (
+    Attendance_Tracking_ListCreateAPIView,
+    Attendance_Tracking_RetrieveUpdateDestroyAPIView,
+)
+from .views import Barcode_ScanView
+
+app_name = 'attendance_tracking'
 
 urlpatterns = [
-    path('attendance/', AttendanceListCreateAPIView.as_view(), name='attendance-list-create'),
-    path('attendance/<str:attendance_id>/', AttendanceUpdateAPIView.as_view(), name='attendance-update'),
-    path('api/department_superiors/', views.department_superiors_view, name='department_superiors'),
+    path('scan/<str:employee_id>/', Barcode_ScanView.as_view(), name = 'barcode_scan'),
+    path('', Attendance_Tracking_ListCreateAPIView.as_view(), name = 'attendance_tracking_list_create'),
+    path('<str:pk>/', Attendance_Tracking_RetrieveUpdateDestroyAPIView.as_view(), name = 'attendance_tracking_detail'),
 ]
