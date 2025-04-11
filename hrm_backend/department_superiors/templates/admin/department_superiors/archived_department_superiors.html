@@ -1,0 +1,34 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>Archived Department Superiors</h1>
+
+<table class="adminlist">
+    <thead>
+        <tr>
+            <th>Department</th>
+            <th>Position</th>
+            <th>Superior Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for superior in archived_department_superiors %}
+        <tr>
+            <td>{{ superior.dept }}</td>
+            <td>{{ superior.position }}</td>
+            <td>{{ superior.get_superior_name }}</td>
+            <td>
+                <a href="{% url 'department_superiors:department_superiors_unarchive' superior.pk %}">Unarchive</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No archived department superiors found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'admin:department_superiors_departmentsuperior_changelist' %}">Back to Active Department Superiors</a>
+{% endblock %}

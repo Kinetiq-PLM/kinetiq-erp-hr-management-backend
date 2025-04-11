@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>Archived Employees</h1>
+
+<table class="adminlist">
+    <thead>
+        <tr>
+            <th>Employee ID</th>
+            <th>Name</th>
+            <th>Position</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for employee in archived_employees %}
+        <tr>
+            <td>{{ employee.employee_id }}</td>
+            <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+            <td>{{ employee.position }}</td>
+            <td>{{ employee.dept }}</td>
+            <td>{{ employee.status }}</td>
+            <td>
+                <a href="{% url 'employees:employee_unarchive' employee.pk %}">Unarchive</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No archived employees found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'admin:employees_employee_changelist' %}">Back to Active Employees</a>
+{% endblock %}
