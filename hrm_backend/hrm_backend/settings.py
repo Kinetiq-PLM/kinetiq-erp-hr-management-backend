@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     "employee_performance",
     'employees.apps.EmployeesConfig',
     "employee_salary",
-    "leave_requests",
+    "employee_leave_requests",
     "positions",
     "workforce_allocation",
     "rest_framework",
