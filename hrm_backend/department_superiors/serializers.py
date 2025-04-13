@@ -14,6 +14,7 @@ class Department_Superior_Serializer(serializers.ModelSerializer):
         model = Department_Superior
         fields = [
             'dept_superior_id',
+            'dept_id',
             'dept_name',
             'position_title',
             'position_id',
@@ -47,8 +48,8 @@ class Department_Superior_Serializer(serializers.ModelSerializer):
         return emp.status if emp else None
 
 class Department_Superior_WriteSerializer(serializers.ModelSerializer):
-    dept_name = serializers.CharField(write_only=True, required=True)
-    position_title = serializers.CharField(write_only=True, required=True)
+    dept_name = serializers.CharField(write_only = True, required = True)
+    position_title = serializers.CharField(write_only = True, required = True)
 
     class Meta:
         model = Department_Superior
@@ -58,12 +59,12 @@ class Department_Superior_WriteSerializer(serializers.ModelSerializer):
         dept_name = validated_data.pop('dept_name')
         position_title = validated_data.pop('position_title')
 
-        dept, _ = Department.objects.get_or_create(dept_name=dept_name)
-        position, _ = Position.objects.get_or_create(position_title=position_title)
+        dept, _ = Department.objects.get_or_create(dept_name = dept_name)
+        position, _ = Position.objects.get_or_create(position_title = position_title)
 
         dept_superior = Department_Superior.objects.create(
-            dept=dept,
-            position=position,
+            dept = dept,
+            position = position,
             **validated_data
         )
 
@@ -74,11 +75,11 @@ class Department_Superior_WriteSerializer(serializers.ModelSerializer):
         position_title = validated_data.pop('position_title', None)
 
         if dept_name:
-            dept, _ = Department.objects.get_or_create(dept_name=dept_name)
+            dept, _ = Department.objects.get_or_create(dept_name = dept_name)
             instance.dept = dept
 
         if position_title:
-            position, _ = Position.objects.get_or_create(position_title=position_title)
+            position, _ = Position.objects.get_or_create(position_title = position_title)
             instance.position = position
 
         instance.hierarchy_level = validated_data.get('hierarchy_level', instance.hierarchy_level)
@@ -88,11 +89,11 @@ class Department_Superior_WriteSerializer(serializers.ModelSerializer):
         return instance
 
 class Department_Superior_History_Serializer(serializers.ModelSerializer):
-    history_user = serializers.CharField(source="history_user.username", read_only=True)
-    history_change_reason = serializers.CharField(read_only=True)
-    history_date = serializers.DateTimeField(read_only=True)
+    history_user = serializers.CharField(source="history_user.username", read_only = True)
+    history_change_reason = serializers.CharField(read_only = True)
+    history_date = serializers.DateTimeField(read_only = True)
     status = serializers.SerializerMethodField()
-    dept_name = serializers.CharField(source='dept.dept_name', read_only=True)
+    dept_name = serializers.CharField(source='dept.dept_name', read_only = True)
 
     class Meta:
         model = Department.history.model
