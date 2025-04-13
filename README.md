@@ -19,7 +19,7 @@ A Django-based backend system for managing human resources including employee re
 - **Workforce Allocations**: ~80% Done
 
 ### Leave & Job Management
-- **Leave Request**: Not Started
+- **Leave Request**: [Complete]
 - **Leave Balances**: Not Started
 - **Job Posting**: Not Started
 - **Recruitment (Candidates, Interviews)**: Not Started
