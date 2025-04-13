@@ -2,6 +2,7 @@ from django.db import models
 from django.apps import apps
 from django.utils import timezone
 from departments.models import Department
+from department_superiors.models import Department_Superior
 from positions.models import Position
 from django.core.exceptions import ValidationError
 from simple_history.models import HistoricalRecords
@@ -68,14 +69,25 @@ class Employee(models.Model):
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
-
         if is_new and not self.employee_id:
             self.employee_id = f"HR-EMP-{date.today().year}-{uuid.uuid4().hex[:6]}".upper()
 
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.employee_id})"
+        if self.is_supervisor:
+            Department_Superior.objects.update_or_create(
+                dept=self.dept,
+                position=self.position,
+                defaults={
+                    'employee': self,
+                    'is_archived': False
+                }
+            )
+        else:
+            Department_Superior.objects.filter(employee=self).update(is_archived=True)
+
+        def __str__(self):
+            return f"{self.first_name} {self.last_name} ({self.employee_id})"
 
     class Meta:
         db_table = 'employees'

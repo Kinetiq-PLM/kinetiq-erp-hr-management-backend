@@ -6,7 +6,7 @@ import uuid
 class Department(models.Model):
     dept_id = models.CharField(primary_key = True, max_length = 20, editable = False)
     dept_name = models.CharField(max_length = 100)
-    is_archived = models.BooleanField(default = False)  # added archive and unarchive logic
+    is_archived = models.BooleanField(default = False)
 
     history = HistoricalRecords() # history
     change_reason = models.CharField(max_length = 255, blank = True, null = True)
@@ -16,7 +16,6 @@ class Department(models.Model):
         if Department.objects.filter(dept_name = self.dept_name, is_archived = False).exists():
             raise ValidationError(f"A department with the name '{self.dept_name}' already exists and is active.")
 
-    # creation
     def save(self, *args, **kwargs):
         if not self.dept_id:
             self.dept_id = f"HR-DEPT-2025-{uuid.uuid4().hex[:6]}"

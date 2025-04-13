@@ -4,6 +4,8 @@ from departments.models import Department
 from positions.models import Position
 from django.core.exceptions import ValidationError
 from simple_history.models import HistoricalRecords
+import string
+import random
 
 class Department_Superior(models.Model):
     dept_superior_id = models.CharField(primary_key = True)
@@ -20,7 +22,10 @@ class Department_Superior(models.Model):
     def clean(self):
         if Department_Superior.objects.filter(dept=self.dept, position=self.position, is_archived=False).exists():
             raise ValidationError(f"A department superior for {self.dept.dept_name} with the position {self.position.position_title} already exists and is active.")
-
+        
+    def generate_department_superior_id(self):
+        random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 6))
+        return f"DEPT-SUPT-2025-{random_part}"
 
     class Meta:
         db_table = "department_superiors"

@@ -92,7 +92,6 @@ class Department_Superior_Admin(admin.ModelAdmin):
             fields.remove('is_archived')
         return fields
     
-
 # nilagyan ko na rin akhit walang add, just incase 
     def get_form(self, request, obj = None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
