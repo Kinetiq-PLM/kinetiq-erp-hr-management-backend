@@ -58,36 +58,25 @@ class Employee(models.Model):
         if not name_regex.match(self.last_name):
             raise ValidationError(f"Last name '{self.last_name}' contains invalid characters. Only letters and basic punctuation are allowed.")
         
-        if Employee.objects.filter(phone=self.phone, is_archived=False).exclude(pk=self.pk).exists():
+        if Employee.objects.filter(phone=self.phone, is_archived = False).exclude(pk=self.pk).exists():
             raise ValidationError(f"An active employee with the phone number '{self.phone}' already exists.")
         
-        if Employee.objects.filter(first_name=self.first_name, last_name=self.last_name, is_archived=False).exclude(pk=self.pk).exists():
+        if Employee.objects.filter(first_name=self.first_name, last_name=self.last_name, is_archived = False).exclude(pk=self.pk).exists():
             raise ValidationError(f"An active employee with the name '{self.first_name} {self.last_name}' already exists.")
         
         if self.status == 'Inactive' and self.is_supervisor:
             raise ValidationError("An inactive employee cannot be a supervisor.")
 
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        if is_new and not self.employee_id:
-            self.employee_id = f"HR-EMP-{date.today().year}-{uuid.uuid4().hex[:6]}".upper()
+        def save(self, *args, **kwargs):
+            is_new = self.pk is None
 
-        super().save(*args, **kwargs)
+            if is_new and not self.employee_id:
+                self.employee_id = f"HR-EMP-{date.today().year}-{uuid.uuid4().hex[:6]}".upper()
 
-        if self.is_supervisor:
-            Department_Superior.objects.update_or_create(
-                dept=self.dept,
-                position=self.position,
-                defaults={
-                    'employee': self,
-                    'is_archived': False
-                }
-            )
-        else:
-            Department_Superior.objects.filter(employee=self).update(is_archived=True)
+            super().save(*args, **kwargs)
 
         def __str__(self):
-            return f"{self.first_name} {self.last_name} ({self.employee_id})"
+            return f"{self.first_name} {self.last_name} - {self.position.position_title}"
 
     class Meta:
         db_table = 'employees'

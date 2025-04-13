@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django import forms
+from .forms import Department_Superior_Admin_Form
 from .models import Department_Superior
 from departments.models import Department
 from django.contrib.admin import SimpleListFilter
@@ -35,6 +36,10 @@ class Department_Superior_Admin(admin.ModelAdmin):
     list_filter = (ActiveDepartment_Filter,)
     search_fields = ('dept_superior_id', 'position__position_title',)
     # list_display_links = None
+    form = Department_Superior_Admin_Form
+
+    def get_fields(self, request, obj = None):
+        return ['employee', 'hierarchy_level']
 
     def has_add_permission(self, request):
         return False
@@ -94,6 +99,7 @@ class Department_Superior_Admin(admin.ModelAdmin):
     
 # nilagyan ko na rin akhit walang add, just incase 
     def get_form(self, request, obj = None, **kwargs):
+        kwargs['form'] = self.form
         form = super().get_form(request, obj, **kwargs)
         
         if obj is None:
