@@ -1,10 +1,10 @@
-from rest_framework import generics, permissions, status, viewsets
-from rest_framework.views import APIView
-from rest_framework import viewsets
-from .models import Employee_Salary
-from .serializers import Employee_Salary_Serializer
-# from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets, permissions
 from rest_framework.exceptions import PermissionDenied
+from .models import Employee_Salary
+from .serializers import (
+    Employee_Salary_Serializer,
+    Employee_Salary_CreateSerializer
+)
 
 class IsHRMember(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -12,24 +12,18 @@ class IsHRMember(permissions.BasePermission):
             raise PermissionDenied("You do not have permission to view this resource.")
         return True
 
-class Employee_Salary_ViewSet(viewsets.ModelViewSet):
-     # permission_classes = [IsAuthenticated, IsHRMember]
+class EmployeeSalaryViewSet(viewsets.ModelViewSet):
     queryset = Employee_Salary.objects.all()
-    serializer_class = Employee_Salary_Serializer
-
-class Employee_Salary_ListCreateAPIView(generics.ListCreateAPIView):
-    # permission_classes = [IsAuthenticated, IsHRMember]
-    queryset = Employee_Salary.objects.all()
-    serializer_class = Employee_Salary_Serializer
-
-class Employee_Salary_RetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    # permission_classes = [IsAuthenticated, IsHRMember]
-    queryset = Employee_Salary.objects.all()
-    serializer_class = Employee_Salary_Serializer
-    lookup_field = 'pk'
-
-class Employee_Salary_DestroyAPIView(generics.DestroyAPIView):
-    # permission_classes = [IsAuthenticated, IsHRMember]
-    queryset = Employee_Salary.objects.all()
-    serializer_class = Employee_Salary_Serializer
     lookup_field = 'salary_id'
+    # permission_classes = [IsAuthenticated, IsHRMember]
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return Employee_Salary_CreateSerializer
+        return Employee_Salary_Serializer
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def perform_update(self, serializer):
+        serializer.save()

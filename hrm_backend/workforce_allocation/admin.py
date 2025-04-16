@@ -1,24 +1,22 @@
 from django.contrib import admin
 from .models import Workforce_Allocation
 
-
 @admin.register(Workforce_Allocation)
 class Workforce_AllocationAdmin(admin.ModelAdmin):
     list_display = (
         "allocation_id",
         "request_id",
-        "get_employee_id",
-        "get_first_name",
-        "get_last_name",
         "requesting_dept_id",
+        "get_hr_approver",
+        "get_employee_id",
+        "get_employee_name",
         "required_skills",
         "task_description",
-        "get_hr_approver",
-        "rejection_reason",
         "approval_status",
         "get_application_status",
         "get_submitted_at",
         "get_approved_at",
+        "rejection_reason",
         "start_date",
         "end_date",
     )
@@ -37,14 +35,6 @@ class Workforce_AllocationAdmin(admin.ModelAdmin):
         return obj.employee.employee_id if obj.employee else "-"
     get_employee_id.short_description = "Employee ID"
 
-    def get_first_name(self, obj):
-        return obj.employee.first_name if obj.employee else "-"
-    get_first_name.short_description = "First Name"
-
-    def get_last_name(self, obj):
-        return obj.employee.last_name if obj.employee else "-"
-    get_last_name.short_description = "Last Name"
-
     def get_hr_approver(self, obj):
         return obj.hr_approver.employee_id if obj.hr_approver else "-"
     get_hr_approver.short_description = "HR Approver"
@@ -62,3 +52,9 @@ class Workforce_AllocationAdmin(admin.ModelAdmin):
     def get_approved_at(self, obj):
         return obj.approved_at if obj.approved_at else "-"
     get_approved_at.short_description = "Approved At"
+
+    def get_employee_name(self, obj):
+        return f"{obj.employee.first_name} {obj.employee.last_name}"
+    get_employee_name.short_description = 'Employee Name'
+
+

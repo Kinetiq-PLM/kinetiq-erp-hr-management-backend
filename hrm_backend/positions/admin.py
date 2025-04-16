@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django import forms
 from .models import Position
 
 @admin.register(Position)
@@ -33,12 +32,3 @@ class PositionAdmin(admin.ModelAdmin):
         if 'is_archived' in fields:
             fields.remove('is_archived')
         return fields
-    
-    # hide the fuckign chnag reason xd d ko matnggal HHAHAHA
-    def get_form(self, request, obj = None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        
-        if obj is None:
-            form.base_fields['change_reason'].required = False
-            form.base_fields['change_reason'].widget = forms.HiddenInput()
-        return form

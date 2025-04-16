@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django import forms
-from .forms import Department_Superior_Admin_Form
 from .models import Department_Superior
 from departments.models import Department
+from positions.models import Position
+
 from django.contrib.admin import SimpleListFilter
 
 # filtering don't remove (all of them are the same on all submodules) 
@@ -13,6 +14,7 @@ class ActiveDepartment_Filter(SimpleListFilter):
     def lookups(self, request, model_admin):
         active_departments = Department.objects.filter(is_archived = False)
         return [(dept.pk, dept.dept_name) for dept in active_departments]
+       
 
     def queryset(self, request, queryset):
         if self.value():
@@ -23,6 +25,7 @@ class ActiveDepartment_Filter(SimpleListFilter):
 class Department_Superior_Admin(admin.ModelAdmin):
     list_display = (
         'dept_superior_id', # ADDED THIS BECAUSE THERE IS NO FUCKING PRIMARY KEy xd
+        'get_dept_id',
         'get_dept_name',
         'get_position_id',
         'get_position_title',
@@ -36,13 +39,13 @@ class Department_Superior_Admin(admin.ModelAdmin):
     list_filter = (ActiveDepartment_Filter,)
     search_fields = ('dept_superior_id', 'position__position_title',)
     # list_display_links = None
-    form = Department_Superior_Admin_Form
+    # form = Department_Superior_Admin_Form
 
     def get_fields(self, request, obj = None):
         return ['employee', 'hierarchy_level']
 
     def has_add_permission(self, request):
-        return False
+        return True
 
     def get_dept_id(self, obj):
         return obj.dept.dept_id
@@ -96,13 +99,3 @@ class Department_Superior_Admin(admin.ModelAdmin):
         if 'is_archived' in fields:
             fields.remove('is_archived')
         return fields
-    
-# nilagyan ko na rin akhit walang add, just incase 
-    def get_form(self, request, obj = None, **kwargs):
-        kwargs['form'] = self.form
-        form = super().get_form(request, obj, **kwargs)
-        
-        if obj is None:
-            form.base_fields['change_reason'].required = False
-            form.base_fields['change_reason'].widget = forms.HiddenInput()
-        return form

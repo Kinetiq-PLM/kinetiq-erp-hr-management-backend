@@ -42,7 +42,7 @@ class Employee_Performance_Admin(admin.ModelAdmin):
         model = Employee_Performance
         fields = ['employee', 'rating', 'bonus_amount', 'review_date', 'bonus_payment_month']
 
-    def get_form(self, request, obj=None, **kwargs):
+    def get_form(self, request, obj = None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields['employee'].queryset = Employee.objects.filter(performance_reviews__isnull = True)
         return form

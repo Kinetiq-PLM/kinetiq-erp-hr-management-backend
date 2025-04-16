@@ -1,12 +1,12 @@
-from django.urls import path
-from .views import (
-    Employee_Performance_ListCreateAPIView,
-    Employee_Performance_RetrieveUpdateDestroyAPIView,
-)
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import EmployeePerformanceViewSet
+
+router = DefaultRouter()
+router.register(r'employee_performance', EmployeePerformanceViewSet)
 
 app_name = 'employee_performance'
 
 urlpatterns = [
-    path('', Employee_Performance_ListCreateAPIView.as_view(), name = 'employee_performance_list_create'),
-    path('<str:pk>/', Employee_Performance_RetrieveUpdateDestroyAPIView.as_view(), name = 'employee_performance_detail'),
+    path('', include(router.urls)),
 ]

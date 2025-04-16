@@ -2,10 +2,8 @@ from django.db import models
 from django.apps import apps
 from django.utils import timezone
 from departments.models import Department
-from department_superiors.models import Department_Superior
 from positions.models import Position
 from django.core.exceptions import ValidationError
-from simple_history.models import HistoricalRecords
 from datetime import date
 import uuid
 import re
@@ -36,15 +34,12 @@ class Employee(models.Model):
     phone = models.CharField(max_length = 20)
     # email = models.EmailField(max_length = 255, blank = True, null = True) may gagawin pa rito sabi comment ko lang
     employment_type = models.CharField(max_length = 20, choices = EMPLOYMENT_TYPES)
-    status = models.CharField(max_length = 20, choices = STATUS_CHOICES, default = 'Active')
+    status = models.CharField(max_length = 50, choices = STATUS_CHOICES, default = 'Active')
     reports_to = models.CharField(max_length = 255, blank = True, null = True)
     is_supervisor = models.BooleanField(default = False)
     created_at = models.DateTimeField(default = timezone.now)
     updated_at = models.DateTimeField(auto_now = True)
     is_archived = models.BooleanField(default = False) 
-
-    history = HistoricalRecords() # history
-    change_reason = models.CharField(max_length=255, blank = True, null = True)
 
     # validation errors
     def clean(self):
@@ -67,16 +62,17 @@ class Employee(models.Model):
         if self.status == 'Inactive' and self.is_supervisor:
             raise ValidationError("An inactive employee cannot be a supervisor.")
 
-        def save(self, *args, **kwargs):
-            is_new = self.pk is None
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
 
-            if is_new and not self.employee_id:
-                self.employee_id = f"HR-EMP-{date.today().year}-{uuid.uuid4().hex[:6]}".upper()
+        if is_new and not self.employee_id:
+            self.employee_id = f"HR-EMP-{date.today().year}-{uuid.uuid4().hex[:6]}".upper()
 
-            super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
-        def __str__(self):
-            return f"{self.first_name} {self.last_name} - {self.position.position_title}"
+    def __str__(self):
+        position_title = self.position.position_title if self.position else "No Position"
+        return f"{self.first_name} {self.last_name} - {position_title}"
 
     class Meta:
         db_table = 'employees'

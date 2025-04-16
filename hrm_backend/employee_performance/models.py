@@ -47,7 +47,6 @@ class Employee_Performance(models.Model):
         help_text="Month when bonus will be paid."
     )
     updated_at = models.DateTimeField(auto_now = True)
-    is_archived = models.BooleanField(default = False)  # added archive and unarchive logic
 
     class Meta:
         db_table = 'employee_performance'

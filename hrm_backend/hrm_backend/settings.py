@@ -24,8 +24,11 @@ SECRET_KEY = 'django-insecure-er7k#1^5gn^hhf84_h(hybz__1$yrh2n7-)qw^*dsmr&uj#@$y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]  # Allows access from any host (change in production)
-
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    'x0crs910m2.execute-api.ap-southeast-1.amazonaws.com',
+]
 
 # Application definition
 
@@ -37,16 +40,22 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'django_extensions',
+
     "attendance_tracking",
     'calendar_dates',
+    'candidates',
     "department_superiors",
     "departments",
+    'employees',
     "employee_leave_balances",
-    "employee_performance",
-    'employees.apps.EmployeesConfig',
-    "employee_salary",
     "employee_leave_requests",
+    "employee_performance",
+    "employee_salary",
+    "job_posting",
+    "payroll",
     "positions",
+    "resignation",
     "workforce_allocation",
     "rest_framework",
     "corsheaders",    
@@ -141,14 +150,28 @@ WSGI_APPLICATION = 'hrm_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'Kinetiq-DB-Schema',
+#         'USER': 'postgres',
+#         'PASSWORD': 'postgres',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#         'OPTIONS': {
+#             'options': '-c search_path=human_resources'
+#         },
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'Kinetiq-DB-Schema',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME', 'Kinetiq-DB'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'KntBg3jIY0DbpH8G9bwt'),
+        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+        'PORT': os.getenv('DB_PORT', '15432'),
         'OPTIONS': {
             'options': '-c search_path=human_resources'
         },

@@ -22,9 +22,6 @@ class Employee_Leave_Request(models.Model):
     is_archived = models.BooleanField(default = False)
 
     created_at = models.DateTimeField(default = timezone.now)
-    
-    history = HistoricalRecords()
-    change_reason = models.CharField(max_length = 255, blank = True, null = True)
 
     def clean(self):
         if Employee_Leave_Request.objects.filter(

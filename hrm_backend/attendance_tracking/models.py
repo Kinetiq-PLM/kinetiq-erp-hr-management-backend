@@ -3,12 +3,12 @@ from employees.models import Employee
 
 class Attendance_Tracking(models.Model):
     STATUS_CHOICES = [
-        ("Present", "Present"),
-        ("Clocked Out", "Clocked Out"),
-        ("Absent", "Absent"),
-        ("On Leave", "On Leave"),
-        ("Late", "Late"),
-        ("Half Day", "Half Day"),
+        ('Present', 'Present'),
+        ('Clocked Out', 'Clocked Out'),
+        ('Absent', 'Absent'),
+        ('On Leave', 'On Leave'),
+        ('Late', 'Late'),
+        ('Half Day', 'Half Day'),
     ]
 
     def get_default_employee():
@@ -24,10 +24,9 @@ class Attendance_Tracking(models.Model):
     undertime_hours = models.DecimalField(max_digits = 4, decimal_places = 2, default = 0)
     is_holiday = models.BooleanField(default = False)
     holiday_type = models.CharField(max_length = 20, null = True, blank = True)
-    # work_hours = models.DecimalField(max_digits = 5, decimal_places=2, null = True, blank = True) commented out since auto generated ni DB
+    work_hours = models.DecimalField(max_digits = 5, decimal_places=2, null = True, blank = True) # commented out since auto generated ni DB
     created_at = models.DateTimeField(auto_now = True)
     updated_at = models.DateTimeField(auto_now = True)
-    is_archived = models.BooleanField(default = False)
 
     class Meta:
         db_table = "attendance_tracking"

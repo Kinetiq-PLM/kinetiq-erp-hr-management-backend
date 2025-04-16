@@ -6,7 +6,6 @@ class Calendar_Date(models.Model):
     is_holiday = models.BooleanField(default = False)
     is_special = models.BooleanField(default = False)
     holiday_name = models.CharField(max_length = 100, null = True, blank = True)
-    holiday_type = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         return f"{self.date} - Workday: {self.is_workday}"

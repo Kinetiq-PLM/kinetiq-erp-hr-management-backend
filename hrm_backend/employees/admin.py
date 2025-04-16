@@ -11,16 +11,16 @@ class Employee_Admin(admin.ModelAdmin):
         'employee_id',
         'user_id',
         'dept_id',
-        'department',
+        'dept_name',
         'position_id',
         'position_title',
-        'salary_grade',
         'first_name',
         'last_name',
         'phone',
         'employment_type',
         'status',
         'is_supervisor',
+        'salary_grade',
         'reports_to',
         'created_at',
         'updated_at',
@@ -33,6 +33,9 @@ class Employee_Admin(admin.ModelAdmin):
 
     def department(self, obj):
         return obj.dept.dept_name if obj.dept else 'N/A'
+    
+    def dept_name(self, obj):
+        return obj.dept.dept_name if obj.dept else 'N/A'
 
     def position(self, obj):
         return obj.position.position_title if obj.position else 'N/A'
@@ -44,16 +47,6 @@ class Employee_Admin(admin.ModelAdmin):
     def salary_grade(self, obj):
         return obj.position.salary_grade if obj.position else 'N/A'
     salary_grade.short_description = 'Salary Grade'
-
-    # hide the fuckign chnag reason xd d ko matnggal HHAHAHA
-    def get_form(self, request, obj = None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        
-        if obj is None:
-            form.base_fields['change_reason'].required = False
-            form.base_fields['change_reason'].widget = forms.HiddenInput()
-        return form
-
 
     def save_model(self, request, obj, form, change):
             if not obj.employee_id:

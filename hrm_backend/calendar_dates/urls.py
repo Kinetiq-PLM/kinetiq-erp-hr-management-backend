@@ -1,9 +1,12 @@
-from django.urls import path
-from .views import Calendar_Date_ListCreateAPIView, Calendar_Date_RetrieveAPIView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import CalendarDateViewSet
+
+router = DefaultRouter()
+router.register(r'calendar_dates', CalendarDateViewSet)
 
 app_name = 'calendar_dates'
 
 urlpatterns = [
-    path('', Calendar_Date_ListCreateAPIView.as_view(), name='calendar_date_list_create'),
-    path('<str:date>/', Calendar_Date_RetrieveAPIView.as_view(), name='calendar_date_detail'),
+    path('', include(router.urls)),
 ]

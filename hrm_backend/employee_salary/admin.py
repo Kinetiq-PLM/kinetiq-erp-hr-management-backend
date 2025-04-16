@@ -19,7 +19,7 @@ class Employee_Salary_Form(forms.ModelForm):
             emp_type = instance.employee.employment_type
         elif employee_id:
             try:
-                emp_type = Employee.objects.get(pk=employee_id).employment_type
+                emp_type = Employee.objects.get(pk = employee_id).employment_type
             except Employee.DoesNotExist:
                 emp_type = None
         else:
@@ -46,14 +46,14 @@ class Employee_Salary_Admin(admin.ModelAdmin):
     search_fields = ('salary_id', 'employee__employee_id', 'employee__first_name', 'employee__last_name')
     list_filter = ("effective_date", "daily_rate", "base_salary")
 
-    def get_readonly_fields(self, request, obj=None):
+    def get_readonly_fields(self, request, obj = None):
         return ('employee',) if obj else ()
 
-    def get_form(self, request, obj=None, **kwargs):
+    def get_form(self, request, obj = None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         if not obj:
-            salaried_employees = Employee_Salary.objects.values_list('employee_id', flat=True)
-            form.base_fields['employee'].queryset = Employee.objects.exclude(employee_id__in=salaried_employees)
+            salaried_employees = Employee_Salary.objects.values_list('employee_id', flat = True)
+            form.base_fields['employee'].queryset = Employee.objects.exclude(employee_id__in = salaried_employees)
         return form
 
     def get_urls(self):
@@ -66,10 +66,10 @@ class Employee_Salary_Admin(admin.ModelAdmin):
     def get_employment_type(self, request):
         employee_id = request.GET.get('employee_id')
         try:
-            employee = Employee.objects.get(employee_id=employee_id)
+            employee = Employee.objects.get(employee_id = employee_id)
             return JsonResponse({'employment_type': employee.employment_type})
         except Employee.DoesNotExist:
-            return JsonResponse({'employment_type': None}, status=404)
+            return JsonResponse({'employment_type': None}, status = 404)
 
     def get_employee_id(self, obj):
         return obj.employee.employee_id

@@ -1,15 +1,11 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from simple_history.models import HistoricalRecords
 import uuid
 
 class Department(models.Model):
     dept_id = models.CharField(primary_key = True, max_length = 20, editable = False)
     dept_name = models.CharField(max_length = 100)
     is_archived = models.BooleanField(default = False)
-
-    history = HistoricalRecords() # history
-    change_reason = models.CharField(max_length = 255, blank = True, null = True)
 
     # validation errors
     def clean(self):

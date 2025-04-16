@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Employee_Performance
+from employees.models import Employee
 
 class Employee_Performance_Serializer(serializers.ModelSerializer):
     employee_id = serializers.SerializerMethodField()
@@ -20,19 +21,8 @@ class Employee_Performance_Serializer(serializers.ModelSerializer):
             'review_date',
             'bonus_payment_month',
             'updated_at',
-            'is_archived',
         ]
-        read_only_fields = [
-            'performance_id',
-            'employee_id',
-            'employee_name',
-            'immediate_superior_id',
-            'immediate_superior_name',
-            'bonus_amount',
-            'review_date',
-            'updated_at',
-            'is_archived',
-        ]
+        read_only_fields = fields  # read-only for display
 
     def get_employee_id(self, obj):
         return obj.employee.employee_id if obj.employee else None
@@ -49,3 +39,49 @@ class Employee_Performance_Serializer(serializers.ModelSerializer):
         if obj.immediate_superior:
             return f"{obj.immediate_superior.first_name} {obj.immediate_superior.last_name}".strip()
         return None
+
+class Employee_Performance_CreateSerializer(serializers.ModelSerializer):
+    employee_id = serializers.CharField(write_only = True)
+    immediate_superior_id = serializers.CharField(write_only = True)
+
+    class Meta:
+        model = Employee_Performance
+        fields = [
+            'employee_id',
+            'immediate_superior_id',
+            'rating',
+            'bonus_payment_month',
+        ]
+
+    def validate_employee_id(self, value):
+        try:
+            return Employee.objects.get(employee_id = value)
+        except Employee.DoesNotExist:
+            raise serializers.ValidationError("Employee with this ID does not exist.")
+
+    def validate_immediate_superior_id(self, value):
+        try:
+            return Employee.objects.get(employee_id = value)
+        except Employee.DoesNotExist:
+            raise serializers.ValidationError("Immediate Superior with this ID does not exist.")
+
+    def create(self, validated_data):
+        employee = validated_data.pop('employee_id')
+        immediate_superior = validated_data.pop('immediate_superior_id')
+        return Employee_Performance.objects.create(
+            employee = employee,
+            immediate_superior = immediate_superior,
+            **validated_data
+        )
+
+    def update(self, instance, validated_data):
+        employee = validated_data.pop('employee_id', None)
+        immediate_superior = validated_data.pop('immediate_superior_id', None)
+        if employee:
+            instance.employee = employee
+        if immediate_superior:
+            instance.immediate_superior = immediate_superior
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance

@@ -1,12 +1,8 @@
-from rest_framework import generics, permissions, status, viewsets
-from django.shortcuts import get_object_or_404
-from rest_framework.views import APIView
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Department
-from .serializers import (
-    Department_Serializer,
-    Department_History_Serializer,
-)
+from .serializers import Department_Serializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 
@@ -16,78 +12,51 @@ class IsHRMember(permissions.BasePermission):
             raise PermissionDenied("You do not have permission to view this resource.")
         return True
 
-class Department_ViewSet(viewsets.ModelViewSet):
-    # permission_classes = [IsAuthenticated, IsHRMember]
+class DepartmentViewSet(viewsets.ModelViewSet):
     queryset = Department.objects.all()
     serializer_class = Department_Serializer
-
-    def get_queryset(self):
-        return Department.objects.filter(is_archived = False)
-
-class Department_ListCreateAPIView(generics.ListCreateAPIView):
     # permission_classes = [IsAuthenticated, IsHRMember]
-    queryset = Department.objects.all()
-    serializer_class = Department_Serializer
-
-    def get_queryset(self):
-        return Department.objects.filter(is_archived = False)
-
-class Department_RetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    # permission_classes = [IsAuthenticated, IsHRMember]
-    queryset = Department.objects.all()
-    serializer_class = Department_Serializer
-    lookup_field = 'pk'
-
-class Department_DestroyAPIView(generics.DestroyAPIView):
-    # permission_classes = [IsAuthenticated, IsHRMember]
-    queryset = Department.objects.all()
-    serializer_class = Department_Serializer
     lookup_field = 'dept_id'
 
-# ARCHIVE LOGIC 
-class Department_ArchiveAPIView(APIView):
-    # permission_classes = [IsAuthenticated, IsHRMember]
+    def get_queryset(self):
+        return Department.objects.filter(is_archived = False)
 
-    def post(self, request, pk):
-        department = get_object_or_404(Department, pk = pk)
+    def perform_create(self, serializer):
+        dept_name = self.request.data.get('dept_name', None)
+        if dept_name:
+            department = Department.objects.get(dept_name = dept_name)
+            serializer.save(dept = department)
+        else:
+            serializer.save()
+
+    def perform_update(self, serializer):
+        dept_name = self.request.data.get('dept_name', None)
+        if dept_name:
+            department = Department.objects.get(dept_name = dept_name)
+            serializer.save(dept = department)
+        else:
+            serializer.save()
+
+    @action(detail = True, methods = ['post'])
+    def archive(self, request, pk = None):
+        department = self.get_object()
         if department.is_archived:
             return Response({"detail": "Department already archived."}, status = status.HTTP_400_BAD_REQUEST)
         department.is_archived = True
         department.save()
         return Response({"detail": "Department archived successfully."}, status = status.HTTP_200_OK)
 
-class Department_UnarchiveAPIView(APIView):
-    # permission_classes = [IsAuthenticated, IsHRMember]
-
-    def post(self, request, pk):
-        department = get_object_or_404(Department, pk = pk)
+    @action(detail = True, methods = ['post'])
+    def unarchive(self, request, pk = None):
+        department = self.get_object()
         if not department.is_archived:
             return Response({"detail": "Department is not archived."}, status = status.HTTP_400_BAD_REQUEST)
         department.is_archived = False
         department.save()
         return Response({"detail": "Department unarchived successfully."}, status = status.HTTP_200_OK)
 
-class Department_ArchiveListAPIView(generics.ListAPIView):
-    # permission_classes = [IsAuthenticated, IsHRMember]
-    serializer_class = Department_Serializer
-
-    def get_queryset(self):
-        return Department.objects.filter(is_archived = True)
-
-
-# history for each departments
-class Department_HistoryView(APIView):
-    # permission_classes = [IsAuthenticated, IsHRMember]
-
-    def get(self, request, *args, **kwargs):
-        dept_id = kwargs.get('dept_id')
-        if dept_id:
-            try:
-                department = Department.objects.get(dept_id = dept_id)
-                history = department.history.all()
-                serializer = Department_History_Serializer(history, many = True)
-                return Response(serializer.data, status = status.HTTP_200_OK)
-            except Department.DoesNotExist:
-                return Response({"detail": "Department not found."}, status = status.HTTP_404_NOT_FOUND)
-        else:
-             return Response({"detail": "Department ID is required."}, status = status.HTTP_400_BAD_REQUEST)
+    @action(detail = False, methods = ['get'])
+    def archived(self, request):
+        archived_departments = Department.objects.filter(is_archived = True)
+        serializer = self.get_serializer(archived_departments, many = True)
+        return Response(serializer.data)
