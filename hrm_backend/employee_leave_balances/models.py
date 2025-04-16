@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from employees.models import Employee 
+from django.core.exceptions import ValidationError
 import uuid
 
 class Employee_Leave_Balance(models.Model):
@@ -26,3 +27,35 @@ class Employee_Leave_Balance(models.Model):
         db_table = "employee_leave_balances"
         verbose_name = "Employee Leave Balance"
         verbose_name_plural = "Employee Leave Balances"
+
+    def update_leave_balance(self, leave_request):
+        leave_type = leave_request.leave_type
+        total_days = leave_request.total_days
+        
+        if leave_type == "Sick":
+            if self.sick_leave >= total_days:
+                self.sick_leave -= total_days
+            else:
+                raise ValidationError("Insufficient sick leave balance.")
+        elif leave_type == "Vacation":
+            if self.vacation_leave >= total_days:
+                self.vacation_leave -= total_days
+            else:
+                raise ValidationError("Insufficient vacation leave balance.")
+        elif leave_type == "Emergency":
+            if self.emergency_leave >= total_days:
+                self.emergency_leave -= total_days
+            else:
+                raise ValidationError("Insufficient emergency leave balance.")
+        
+        self.save()
+
+    def calculate_total_leave_days(self):
+        self.total_leave_days = self.sick_leave + self.vacation_leave + self.emergency_leave
+        self.save()
+
+    def approve_leave(self):
+        if self.status == "Approved":
+            leave_balance = self.employee.leave_balance
+            leave_balance.update_leave_balance(self)
+            leave_balance.calculate_total_leave_days()

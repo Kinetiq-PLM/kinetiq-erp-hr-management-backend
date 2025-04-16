@@ -54,6 +54,7 @@ class Employee_Serializer(serializers.ModelSerializer):
             'first_name': instance.first_name,
             'last_name': instance.last_name,
             'phone': instance.phone,
+            'employment_type': instance.employment_type,
             'status': instance.status,
             'is_supervisor': instance.is_supervisor,
             'reports_to': instance.reports_to,
@@ -91,13 +92,13 @@ class Employee_Serializer(serializers.ModelSerializer):
                 raise ValidationError(f"Department '{dept_name}' does not exist.")
 
         if position_name:
-            position = Position.objects.get(position_title=position_name)
+            position = Position.objects.get(position_title = position_name)
             validated_data['position'] = position
         
         if reports_to:
             try:
-                first_name, last_name = reports_to.split(' ', 1)  # Split by space
-                reports_to_employee = Employee.objects.get(first_name=first_name, last_name=last_name)
+                first_name, last_name = reports_to.split(' ', 1)
+                reports_to_employee = Employee.objects.get(first_name = first_name, last_name = last_name)
                 validated_data['reports_to'] = reports_to_employee
             except Employee.DoesNotExist:
                 raise ValidationError(f"Employee '{reports_to}' does not exist.")
@@ -114,7 +115,7 @@ class Employee_Serializer(serializers.ModelSerializer):
 
         if dept_name:
             try:
-                department = Department.objects.get(dept_name=dept_name)
+                department = Department.objects.get(dept_name = dept_name)
                 validated_data['dept'] = department
             except Department.DoesNotExist:
                 raise ValidationError(f"Department '{dept_name}' does not exist.")

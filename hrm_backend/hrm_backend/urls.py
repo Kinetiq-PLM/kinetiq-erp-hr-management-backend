@@ -6,6 +6,7 @@ urlpatterns = [
     path('api/attendance_tracking/', include('attendance_tracking.urls', namespace = 'attendance_tracking')),
     path('api/calendar_dates/', include('calendar_dates.urls', namespace = 'calendar_dates')),
     path('api/candidates/', include('candidates.urls', namespace = 'candidates')),
+    path('api/dashboard/', include('dashboard.urls', namespace = 'dashboard')),
     path('api/departments/', include('departments.urls', )), 
     path('api/department_superiors/', include('department_superiors.urls', namespace = 'department_superiors')),
     path('api/employees/', include('employees.urls', namespace = 'employees')),

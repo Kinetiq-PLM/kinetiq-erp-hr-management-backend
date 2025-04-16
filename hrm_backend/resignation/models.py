@@ -14,3 +14,6 @@ class Resignation(models.Model):
 
     def __str__(self):
         return self.resignation_id
+    
+    class Meta:
+        db_table = "resignations"

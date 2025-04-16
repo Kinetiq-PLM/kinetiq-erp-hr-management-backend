@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "attendance_tracking",
     'calendar_dates',
     'candidates',
+    'dashboard',
     "department_superiors",
     "departments",
     'employees',
@@ -60,8 +61,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",    
     "django_cognito_jwt",
-
-    'simple_history',
 ]
 
 MIDDLEWARE = [
@@ -73,8 +72,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True

@@ -1,6 +1,8 @@
 from rest_framework import serializers
+from datetime import date
 from .models import Employee_Performance
 from employees.models import Employee
+import uuid
 
 class Employee_Performance_Serializer(serializers.ModelSerializer):
     employee_id = serializers.SerializerMethodField()
@@ -41,14 +43,11 @@ class Employee_Performance_Serializer(serializers.ModelSerializer):
         return None
 
 class Employee_Performance_CreateSerializer(serializers.ModelSerializer):
-    employee_id = serializers.CharField(write_only = True)
-    immediate_superior_id = serializers.CharField(write_only = True)
 
     class Meta:
         model = Employee_Performance
         fields = [
-            'employee_id',
-            'immediate_superior_id',
+            'bonus_amount',
             'rating',
             'bonus_payment_month',
         ]
@@ -67,8 +66,12 @@ class Employee_Performance_CreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         employee = validated_data.pop('employee_id')
-        immediate_superior = validated_data.pop('immediate_superior_id')
+        immediate_superior = validated_data.pop('immediate_superior_id', None)
+        
+        performance_id = f"HR-REV-{date.today().year}-{uuid.uuid4().hex[:6]}".upper()
+
         return Employee_Performance.objects.create(
+            performance_id = performance_id,
             employee = employee,
             immediate_superior = immediate_superior,
             **validated_data

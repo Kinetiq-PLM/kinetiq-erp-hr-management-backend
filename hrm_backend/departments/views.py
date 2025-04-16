@@ -55,7 +55,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
         department.save()
         return Response({"detail": "Department unarchived successfully."}, status = status.HTTP_200_OK)
 
-    @action(detail = False, methods = ['get'])
+    @action(detail = False, methods = ['get'], url_path = 'archived')
     def archived(self, request):
         archived_departments = Department.objects.filter(is_archived = True)
         serializer = self.get_serializer(archived_departments, many = True)

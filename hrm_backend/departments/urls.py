@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import DepartmentViewSet
 
 router = DefaultRouter()
-router.register(r'departments', DepartmentViewSet)
+router.register(r'department', DepartmentViewSet, basename = 'department')
 
 app_name = 'departments'
 

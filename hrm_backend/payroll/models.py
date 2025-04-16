@@ -1,7 +1,14 @@
 from django.db import models
 from django.utils import timezone
+from employee_leave_requests.models import Employee_Leave_Request
+from attendance_tracking.models import Attendance_Tracking
+from calendar_dates.models import Calendar_Date
+from employee_performance.models import Employee_Performance
+# from employee_salary.models import Employee_Salary
+# from employees.models import Employee
 from django.core.exceptions import ValidationError
 import uuid
+from datetime import timedelta
 
 class Payroll(models.Model):
     # xample na constant
@@ -9,6 +16,7 @@ class Payroll(models.Model):
     PHILHEALTH_RATE = 0.04 
     PAGIBIG_RATE = 0.02 
     TAX_RATE = 0.10 
+    OVERTIME_RATE = 1.5
 
     STATUS_CHOICES = [
             ('Draft', 'Draft'),
@@ -84,6 +92,23 @@ class Payroll(models.Model):
         self.tax = self.gross_pay * self.TAX_RATE
         return self.tax
     
+    def update_leave_balance_after_payroll(self):
+        leave_requests = Employee_Leave_Request.objects.filter(
+            employee=self.employee_id,
+            status="Approved",
+            start_date__gte=self.pay_period_start,
+            end_date__lte=self.pay_period_end
+        )
+
+        leave_balance = self.employee.leave_balance
+        for leave in leave_requests:
+            if leave.is_paid:
+                leave_balance.sick_leave += leave.total_days
+            else:
+                leave_balance.sick_leave -= leave.total_days
+
+        leave_balance.save()
+    
     def clean(self):
         if self.status == 'Finalized' and self.pk and self.status != 'Draft':
             previous_instance = Payroll.objects.get(pk=self.pk)
@@ -96,15 +121,82 @@ class Payroll(models.Model):
                 raise ValidationError("Payroll is already locked and cannot be edited.")
 
     def save(self, *args, **kwargs):
-        # recalculate the contribtuons when saving the payroll
+        attendances = Attendance_Tracking.objects.filter(
+            employee_id = self.employee_id,
+            date__range = (self.pay_period_start, self.pay_period_end)
+        )
+
+        self.late_deduction = sum(a.late_hours for a in attendances) * (self.base_salary / 30 / 8)
+        self.absent_deduction = sum(1 for a in attendances if a.status == 'Absent') * (self.base_salary / 30)
+        self.undertime_deduction = sum(a.undertime_hours for a in attendances) * (self.base_salary / 30 / 8)
+
+        self.overtime_hours = sum(a.overtime_hours for a in attendances)
+        self.overtime_pay = self.overtime_hours * (self.base_salary / 30 / 8) * self.OVERTIME_RATE
+
+        # holiday pay
+        holidays = Calendar_Date.objects.filter(
+            date__range = (self.pay_period_start, self.pay_period_end),
+            is_holiday = True
+        )
+        self.holiday_pay = 0
+        for holiday in holidays:
+            att = attendances.filter(date = holiday.date).first()
+            if att and att.status == 'Present':
+                self.holiday_pay += (self.base_salary / 30) * 2 if holiday.holiday_type == 'Regular' else (self.base_salary / 30) * 1.3
+
+        # bonus
+        perf = Employee_Performance.objects.filter(
+            employee_id = self.employee_id,
+            review_date__range = (self.pay_period_start, self.pay_period_end)
+        ).first()
+        self.bonus_pay = perf.bonus_amount if perf else 0
+
+        # 13th month
+        if self.pay_period_end.month == 12 and self.employment_type == 'Regular':
+            self.thirteenth_month_pay = self.base_salary / 2
+
+        # the base gross pay before leave adjustment
+        self.gross_pay = self.base_salary + self.overtime_pay + self.holiday_pay + self.bonus_pay + self.thirteenth_month_pay
+
+        # add the leave pay
+        leave_requests = Employee_Leave_Request.objects.filter(
+            employee = self.employee_id,
+            status = "Approved",
+            start_date__lte = self.pay_period_end,
+            end_date__gte = self.pay_period_start
+        )
+
+        for leave in leave_requests:
+            if leave.is_paid:
+                paid_leave_pay = leave.total_days * (self.base_salary / 30)
+                self.gross_pay += paid_leave_pay
+
+        # recalculate contributions after updated gross
         self.sss_contribution = self.calculate_sss_contribution()
         self.philhealth_contribution = self.calculate_philhealth_contribution()
         self.pagibig_contribution = self.calculate_pagibig_contribution()
-        self.tax = self.calculate_tax() # tax calcualation
 
-        # recalcualte the deudctuon and net pay
-        self.gross_pay = self.base_salary + self.overtime_pay + self.holiday_pay + self.bonus_pay + self.thirteenth_month_pay
-        self.total_deductions = self.sss_contribution + self.philhealth_contribution + self.pagibig_contribution + self.tax + self.late_deduction + self.absent_deduction + self.undertime_deduction
+        # recalculate tax after gross is finalized
+        self.tax = self.calculate_tax()
+
+        # unpaid leave deductions
+        total_leave_deductions = sum(
+            leave.total_days * (self.base_salary / 30)
+            for leave in leave_requests
+            if not leave.is_paid
+        )
+
+        # comptue the total deductions and net pay
+        self.total_deductions = (
+            self.sss_contribution +
+            self.philhealth_contribution +
+            self.pagibig_contribution +
+            self.tax +
+            self.late_deduction +
+            self.absent_deduction +
+            self.undertime_deduction +
+            total_leave_deductions
+        )
         self.net_pay = self.gross_pay - self.total_deductions
 
         super().save(*args, **kwargs)

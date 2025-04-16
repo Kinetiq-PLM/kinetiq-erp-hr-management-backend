@@ -45,7 +45,7 @@ class CandidateViewSet(viewsets.ModelViewSet):
             candidate.save()
             return Response({"message": "Resume uploaded."})
         return Response({"error": "Missing resume_path."}, status = status.HTTP_400_BAD_REQUEST)
-
+ 
     @action(detail = True, methods = ['patch'], url_path = 'add-interview')
     def add_interview(self, request, candidate_id = None):
         candidate = self.get_object()
@@ -57,6 +57,14 @@ class CandidateViewSet(viewsets.ModelViewSet):
             candidate.save()
             return Response(InterviewDetailSerializer(serializer.validated_data).data)
         return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['get'], url_path='interviews')
+    def view_interviews(self, request, candidate_id=None):
+        candidate = self.get_object()
+        interviews = candidate.interview_details
+        if interviews:
+            return Response(InterviewDetailSerializer(interviews, many=True).data)
+        return Response({"detail": "No interviews found for this candidate."}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail = True, methods = ['patch'], url_path = 'verify-document')
     def verify_document(self, request, candidate_id = None):

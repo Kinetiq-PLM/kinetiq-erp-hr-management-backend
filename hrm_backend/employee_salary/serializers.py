@@ -5,6 +5,7 @@ from employees.models import Employee
 class Employee_Salary_Serializer(serializers.ModelSerializer):
     employee_id = serializers.SerializerMethodField()
     employee_name = serializers.SerializerMethodField()
+    estimated_monthly_salary = serializers.SerializerMethodField()
 
     class Meta:
         model = Employee_Salary
@@ -15,6 +16,7 @@ class Employee_Salary_Serializer(serializers.ModelSerializer):
             'base_salary',
             'daily_rate',
             'effective_date',
+            'estimated_monthly_salary',
         ]
         read_only_fields = fields
 
@@ -23,6 +25,9 @@ class Employee_Salary_Serializer(serializers.ModelSerializer):
 
     def get_employee_name(self, obj):
         return f"{obj.employee.first_name} {obj.employee.last_name}"
+
+    def get_estimated_monthly_salary(self, obj):
+        return obj.estimated_monthly_salary
 
 class Employee_Salary_CreateSerializer(serializers.ModelSerializer):
     employee_id = serializers.CharField(write_only = True)

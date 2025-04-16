@@ -3,9 +3,8 @@ from .models import Workforce_Allocation
 from employees.models import Employee
 import uuid
 
-from rest_framework import serializers
 class Workforce_Allocation_Serializer(serializers.ModelSerializer):
-    employee_name = serializers.SerializerMethodField(read_only = True)
+    employee_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Workforce_Allocation
@@ -42,6 +41,7 @@ class Workforce_Allocation_Serializer(serializers.ModelSerializer):
 
 class Workforce_Allocation_CreateSerializer(serializers.ModelSerializer):
     employee_name = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Workforce_Allocation
         fields = [
@@ -54,26 +54,53 @@ class Workforce_Allocation_CreateSerializer(serializers.ModelSerializer):
             'status',
             'start_date',
             'end_date',
+            'approval_status',
+            'rejection_reason',
         ]
 
     def validate(self, data):
         approval_status = data.get("approval_status")
         hr_approver = data.get("hr_approver")
+        rejection_reason = data.get("rejection_reason")
 
         if approval_status == "Approved" and not hr_approver:
             raise serializers.ValidationError("HR approver is required when status is 'Approved'.")
 
+        if approval_status == "Rejected" and not rejection_reason:
+            raise serializers.ValidationError("Rejection reason is required when status is 'Rejected'.")
+
         return data
-    
+
     def get_employee_name(self, obj):
         if obj.employee:
             return f"{obj.employee.first_name} {obj.employee.last_name}"
         return None
 
+    def create(self, validated_data):
+        from uuid import uuid4
+        validated_data['request_id'] = f"REQ-{uuid4()}"
+        validated_data['allocation_id'] = f"ALLOC-{uuid4()}"
+
+        hr_approver = validated_data.get('hr_approver', None)
+        approval_status = validated_data.get('approval_status', 'Pending')
+
+        workforce_allocation = Workforce_Allocation.objects.create(**validated_data)
+
+        self.update_status(workforce_allocation)
+
+        return workforce_allocation
+
+    def update_status(self, allocation):
+        if allocation.approval_status == 'Approved':
+            allocation.status = 'Active'
+        elif allocation.approval_status == 'Rejected':
+            allocation.status = 'Canceled'
+        elif allocation.approval_status == 'Pending':
+            allocation.status = 'Draft'
+        allocation.save()
 
 class Workforce_Allocation_RequestSerializer(serializers.ModelSerializer):
-    # employee = serializers.PrimaryKeyRelatedField(queryset = Employee.objects.all())
-    employee_name = serializers.SerializerMethodField(read_only = True)
+    employee_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Workforce_Allocation
@@ -94,4 +121,17 @@ class Workforce_Allocation_RequestSerializer(serializers.ModelSerializer):
         from uuid import uuid4
         validated_data['request_id'] = f"REQ-{uuid4()}"
         validated_data['allocation_id'] = f"ALLOC-{uuid4()}"
-        return Workforce_Allocation.objects.create(**validated_data)
+        workforce_allocation = Workforce_Allocation.objects.create(**validated_data)
+
+        self.update_status(workforce_allocation)
+
+        return workforce_allocation
+
+    def update_status(self, allocation):
+        if allocation.approval_status == 'Approved':
+            allocation.status = 'Active'
+        elif allocation.approval_status == 'Rejected':
+            allocation.status = 'Canceled'
+        elif allocation.approval_status == 'Pending':
+            allocation.status = 'Draft'
+        allocation.save()

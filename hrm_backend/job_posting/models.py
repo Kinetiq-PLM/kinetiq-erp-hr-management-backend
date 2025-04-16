@@ -49,7 +49,12 @@ class Job_Posting(models.Model):
         unique_part = str(uuid.uuid4().hex)[:6].upper()
         return f"JOB-{timezone.now().year}-{unique_part}"
 
-    class Meta:
-        db_table = "job_posting"
-        verbose_name = "Job Posting"
-        verbose_name_plural = "Job Postings"
+    def save(self, *args, **kwargs):
+        if self.finance_approval_status == 'Approved':
+            self.posting_status = 'Open'
+        elif self.finance_approval_status == 'Rejected':
+            self.posting_status = 'Closed'
+        elif self.finance_approval_status == 'Pending':
+            self.posting_status = 'Draft'
+
+        super(Job_Posting, self).save(*args, **kwargs)

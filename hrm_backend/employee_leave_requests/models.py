@@ -1,8 +1,6 @@
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from simple_history.models import HistoricalRecords
-import uuid
 import random
 import string
 
@@ -47,10 +45,8 @@ class Employee_Leave_Request(models.Model):
             self.leave_id = self.generate_leave_id()
         super().save(*args, **kwargs)
 
-
     def __str__(self):
         return f"{self.employee} Leave ({self.leave_type}) from {self.start_date} to {self.end_date}"
-
 
     class Meta:
             db_table = "leave_requests"

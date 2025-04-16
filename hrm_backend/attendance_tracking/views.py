@@ -2,6 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Attendance_Tracking
+from calendar_dates.models import Calendar_Date
 from .serializers import (
     Attendance_Tracking_Serializer,
     Attendance_Tracking_CreateSerializer,
@@ -38,7 +39,11 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         return Attendance_Tracking_Serializer
 
     def perform_create(self, serializer):
-        serializer.save()
+        today = date.today()
+        if Calendar_Date.is_holiday(today):
+            status = 'On Leave'
+        else:
+            status = 'Present'
 
     def perform_update(self, serializer):
         serializer.save()
@@ -50,25 +55,27 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         read_serializer = Attendance_Tracking_Serializer(serializer.instance, context = {'request': request})
         return Response(read_serializer.data, status = status.HTTP_201_CREATED)
 
-    @action(detail = False, methods = ['post'])
+    @action(detail=False, methods=['post'])
     def scan_barcode(self, request):
         serializer = Barcode_Scan_Serializer(data = request.data)
-        serializer.is_valid(raise_exception = True)
+        serializer.is_valid(raise_exception=True)
         employee_id = serializer.validated_data['employee_id']
-
-        if not employee_id:
-            return Response({"error": "No employee_id provided."}, status = status.HTTP_400_BAD_REQUEST)
-
+        
         employee = Employee.objects.filter(employee_id = employee_id).first()
-
+        
         if not employee:
             return Response({"error": "Employee not found."}, status = status.HTTP_404_NOT_FOUND)
-
+        
         today = date.today()
+
+        calendar_date = Calendar_Date.objects.filter(date = today).first()
+        if not calendar_date:
+            return Response({"error": "No calendar data available for today."}, status = status.HTTP_400_BAD_REQUEST)
 
         attendance, created = Attendance_Tracking.objects.get_or_create(
             employee = employee,
-            date = today
+            date = today,
+            defaults={"calendar_date": calendar_date}
         )
 
         if created:
