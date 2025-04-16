@@ -72,7 +72,7 @@ class Workforce_Allocation_CreateSerializer(serializers.ModelSerializer):
 
 
 class Workforce_Allocation_RequestSerializer(serializers.ModelSerializer):
-    employee = serializers.PrimaryKeyRelatedField(queryset = Employee.objects.all())
+    # employee = serializers.PrimaryKeyRelatedField(queryset = Employee.objects.all())
     employee_name = serializers.SerializerMethodField(read_only = True)
 
     class Meta:
@@ -82,8 +82,7 @@ class Workforce_Allocation_RequestSerializer(serializers.ModelSerializer):
             'task_description',
             'requesting_dept_id',
             'start_date',
-            'employee',
-            'employee_name',
+            'end_date',
         ]
 
     def get_employee_name(self, obj):
