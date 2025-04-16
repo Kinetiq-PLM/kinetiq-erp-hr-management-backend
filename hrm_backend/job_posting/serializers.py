@@ -3,7 +3,7 @@ from .models import (
     Job_Posting,
     Department,
 )
-
+from department_superiors.models import Department_Superior
 class Job_Posting_Serializer(serializers.ModelSerializer):
     dept_id = serializers.SerializerMethodField()
     position_id = serializers.SerializerMethodField()
@@ -68,3 +68,34 @@ class Job_Posting_CreateSerializer(serializers.ModelSerializer):
             'daily_rate',
             'posting_status',
         ]
+
+class Job_Posting_RequestSerializer(serializers.ModelSerializer):
+    # dept_id = serializers.PrimaryKeyRelatedField(
+    #     queryset = Department.objects.all(),
+    #     source = 'dept'
+    # )
+    class Meta:
+        model = Job_Posting
+        fields = [
+            # 'dept_id',
+            'position',
+            'description',
+            'requirements',
+            'base_salary',
+            'daily_rate',
+            'posting_status',
+        ]
+
+    def create(self, validated_data):
+        from uuid import uuid4
+        request = self.context['request']
+        
+        try:
+            dept_superior = Department_Superior.objects.get(user = request.user)
+            validated_data['dept'] = dept_superior.department
+        except Department_Superior.DoesNotExist:
+            raise serializers.ValidationError("Requesting user is not a registered Department Superior.")
+
+        validated_data['job_id'] = f"JOBREQ-{uuid4()}"
+        validated_data['posting_status'] = 'Requested'
+        return Job_Posting.objects.create(**validated_data)

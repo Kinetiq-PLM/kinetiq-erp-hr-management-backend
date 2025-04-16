@@ -5,6 +5,7 @@ from .models import Job_Posting
 from .serializers import (
     Job_Posting_Serializer,
     Job_Posting_CreateSerializer,
+    Job_Posting_RequestSerializer,
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
@@ -20,9 +21,14 @@ class Job_Posting_ViewSet(viewsets.ModelViewSet):
     lookup_field = 'job_id'
     # permission_classes = [IsAuthenticated, IsHRMember]
 
+    def get_queryset(self):
+        return Job_Posting.objects.filter(is_archived = False)
+
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return Job_Posting_CreateSerializer
+        elif self.action == 'request_job_posting':
+            return Job_Posting_RequestSerializer
         return Job_Posting_Serializer
 
     def perform_create(self, serializer):
@@ -54,3 +60,10 @@ class Job_Posting_ViewSet(viewsets.ModelViewSet):
         archived_job_postings = Job_Posting.objects.filter(is_archived = True)
         serializer = self.get_serializer(archived_job_postings, many = True)
         return Response(serializer.data)
+
+    @action(detail = False, methods = ['post'])
+    def request_job_posting(self, request):
+        serializer = self.get_serializer(data = request.data)
+        serializer.is_valid(raise_exception = True)
+        instance = serializer.save()
+        return Response(self.get_serializer(instance).data, status = status.HTTP_201_CREATED)
