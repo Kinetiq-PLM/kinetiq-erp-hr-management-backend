@@ -79,6 +79,24 @@ DATABASES = {
 }
 ```
 
+Or if you are now connected to the RDS go to `hrm_backend/settings.py` and locate the `DATABASES` section and change it to:
+
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'Kinetiq-DB-Schema',
+        'USER': '<your_username>',
+        'PASSWORD': '<your_password>',
+        'HOST': 'localhost',
+        'PORT': '<your_psql_port>',
+        'OPTIONS': {
+            'options': '-c search_path=human_resources'
+        },
+    }
+}
+```
+
 ---
 
 ## Database Setup
