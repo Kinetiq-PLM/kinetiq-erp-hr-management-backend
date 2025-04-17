@@ -30,6 +30,8 @@ ALLOWED_HOSTS = [
     'x0crs910m2.execute-api.ap-southeast-1.amazonaws.com',
 ]
 
+APPEND_SLASH = True
+
 # Application definition
 
 INSTALLED_APPS = [

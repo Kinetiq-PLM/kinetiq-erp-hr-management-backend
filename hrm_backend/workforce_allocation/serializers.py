@@ -4,7 +4,7 @@ from employees.models import Employee
 import uuid
 
 class Workforce_Allocation_Serializer(serializers.ModelSerializer):
-    employee_name = serializers.SerializerMethodField(read_only=True)
+    employee_name = serializers.SerializerMethodField(read_only = True)
 
     class Meta:
         model = Workforce_Allocation
@@ -100,8 +100,6 @@ class Workforce_Allocation_CreateSerializer(serializers.ModelSerializer):
         allocation.save()
 
 class Workforce_Allocation_RequestSerializer(serializers.ModelSerializer):
-    employee_name = serializers.SerializerMethodField(read_only=True)
-
     class Meta:
         model = Workforce_Allocation
         fields = [
@@ -112,19 +110,19 @@ class Workforce_Allocation_RequestSerializer(serializers.ModelSerializer):
             'end_date',
         ]
 
-    def get_employee_name(self, obj):
-        if obj.employee:
-            return f"{obj.employee.first_name} {obj.employee.last_name}"
-        return None
-
     def create(self, validated_data):
         from uuid import uuid4
+
+        # Forcefully remove any externally passed values (just to be safe)
+        validated_data.pop('request_id', None)
+        validated_data.pop('allocation_id', None)
+
         validated_data['request_id'] = f"REQ-{uuid4()}"
         validated_data['allocation_id'] = f"ALLOC-{uuid4()}"
+
         workforce_allocation = Workforce_Allocation.objects.create(**validated_data)
 
         self.update_status(workforce_allocation)
-
         return workforce_allocation
 
     def update_status(self, allocation):

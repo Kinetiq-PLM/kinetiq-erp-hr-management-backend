@@ -76,14 +76,6 @@ class Employee_Leave_RequestAdmin(admin.ModelAdmin):
         return obj.management_approval.dept_superior_id if obj.management_approval else None
     get_management_approval_id.short_description = "Management Approval ID"
 
-    def get_form(self, request, obj = None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        
-        if obj is None:
-            form.base_fields['change_reason'].required = False
-            form.base_fields['change_reason'].widget = forms.HiddenInput()
-        return form
-
     def get_management_approval_name(self, obj):
         if obj.management_approval_id:
             try:
