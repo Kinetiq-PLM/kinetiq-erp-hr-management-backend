@@ -13,12 +13,7 @@ class Employee_Serializer(serializers.ModelSerializer):
     phone = serializers.CharField(max_length=20, required=False)
     employment_type = serializers.CharField(max_length=20, required=False)
     status = serializers.CharField(max_length=20, required=False)
-    reports_to = serializers.PrimaryKeyRelatedField(
-        queryset=Employee.objects.all(),
-        required=False,
-        allow_null=True,
-        source='reports_to_id'  # This keeps the mapping to the model field
-    )
+    reports_to = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), allow_null=True)
     is_supervisor = serializers.BooleanField(required=False, allow_null=True)
     
     # Add these method fields
@@ -105,14 +100,14 @@ class Employee_Serializer(serializers.ModelSerializer):
         position_name = validated_data.pop('position_name', None)
         
         # Get the reports_to Employee object - CHANGE THIS LINE
-        reports_to_employee = validated_data.pop('reports_to_id', None)
+        reports_to_employee = validated_data.pop('reports_to', None)
         
         # Extract the ID from the Employee object if it exists
         # Make this more robust to handle string IDs too
         if isinstance(reports_to_employee, str):
-            reports_to_id = reports_to_employee
+            reports_to = reports_to_employee
         else:
-            reports_to_id = reports_to_employee.employee_id if reports_to_employee else None
+            reports_to = reports_to_employee.employee_id if reports_to_employee else None
         
         # Process basic validations
         try:
@@ -143,7 +138,7 @@ class Employee_Serializer(serializers.ModelSerializer):
         user_id = validated_data.get('user_id', '')
         
         # Pre-validate supervisor requirements to match the trigger's conditions
-        if reports_to_id:
+        if reports_to:
             with connection.cursor() as cursor:
                 # Check if the supervisor exists, is in the same department, and is a supervisor
                 cursor.execute("""
@@ -151,7 +146,7 @@ class Employee_Serializer(serializers.ModelSerializer):
                     WHERE employee_id = %s 
                     AND dept_id = %s 
                     AND is_supervisor = TRUE
-                """, [reports_to_id, dept_id])
+                """, [reports_to, dept_id])
                 
                 count = cursor.fetchone()[0]
                 if count == 0:
@@ -186,7 +181,7 @@ class Employee_Serializer(serializers.ModelSerializer):
                             )
                         """, [
                             employee_id, user_id, dept_id, position_id, first_name, last_name, phone,
-                            employment_type, status, reports_to_id, is_supervisor
+                            employment_type, status, reports_to, is_supervisor
                         ])
                     finally:
                         # Re-enable the trigger if we disabled it
@@ -217,13 +212,13 @@ class Employee_Serializer(serializers.ModelSerializer):
         position_name = validated_data.pop('position_name', None)
         
         # Get the reports_to Employee object - CHANGE THIS LINE to match create method
-        reports_to_employee = validated_data.pop('reports_to_id', None)
+        reports_to_employee = validated_data.pop('reports_to', None)
         
         # Extract the ID from the Employee object if it exists - same as in create method
         if isinstance(reports_to_employee, str):
-            reports_to_id = reports_to_employee
+            reports_to = reports_to_employee
         else:
-            reports_to_id = reports_to_employee.employee_id if reports_to_employee else None
+            reports_to = reports_to_employee.employee_id if reports_to_employee else None
         
         # Process department and position
         if dept_name:
@@ -259,7 +254,7 @@ class Employee_Serializer(serializers.ModelSerializer):
                 validated_data.get('phone', instance.phone),
                 validated_data.get('employment_type', instance.employment_type),
                 validated_data.get('status', instance.status),
-                reports_to_id,  # Use the extracted ID directly
+                reports_to,  # Use the extracted ID directly
                 validated_data.get('is_supervisor', instance.is_supervisor),
                 instance.employee_id
             ])
