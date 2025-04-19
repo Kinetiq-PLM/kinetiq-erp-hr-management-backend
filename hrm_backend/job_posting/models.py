@@ -58,9 +58,7 @@ class Job_Posting(models.Model):
             self.posting_status = 'Draft'
 
         super(Job_Posting, self).save(*args, **kwargs)
-
+        
     class Meta:
-        db_table = "job_posting"
-        verbose_name = "Job Posting"
-        verbose_name_plural = "Job Postings"
-
+        db_table = 'job_posting'  # Explicitly tell Django to use this table name
+        managed = False  # Since the table already exists in your database

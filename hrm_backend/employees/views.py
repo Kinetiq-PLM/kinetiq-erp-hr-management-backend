@@ -70,3 +70,8 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         archived_employees = Employee.objects.filter(is_archived = True)
         serializer = self.get_serializer(archived_employees, many = True)
         return Response(serializer.data)
+
+    # In views.py - Add this temporarily for debugging
+    def create(self, request, *args, **kwargs):
+        print("Received data:", request.data)
+        return super().create(request, *args, **kwargs)

@@ -45,7 +45,7 @@ class Workforce_Allocation(models.Model):
     )
     start_date = models.DateField(null = True, blank = True)
     end_date = models.DateField(null = True, blank = True)
-    rejection_reason = models.TextField(null = True, blank = True, default = "Pending")
+    rejection_reason = models.TextField(null = True, blank = True)
     submitted_at = models.DateTimeField(null = True, blank = True)
     approved_at = models.DateTimeField(null = True, blank = True)
     is_archived = models.BooleanField(default = False)  # added archive and unarchive logic

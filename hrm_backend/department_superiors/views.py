@@ -2,6 +2,7 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Department_Superior, Department
+from positions.models import Position  # Import Position model
 from .serializers import(
     Department_Superior_Serializer,
     Department_Superior_CreateSerializer,
@@ -16,39 +17,91 @@ class IsHRMember(permissions.BasePermission):
         return True
 
 class Department_SuperiorViewSet(viewsets.ModelViewSet):
-    queryset = Department_Superior.objects.select_related('position', 'dept', 'employee').all()
+    queryset = Department_Superior.objects.select_related('position', 'dept').all()
     serializer_class = Department_Superior_Serializer
     # permission_classes = [IsAuthenticated, IsHRMember]
     lookup_field = 'dept_superior_id'
 
     def get_queryset(self):
-        return Department_Superior.objects.filter(is_archived = False)
+        # For 'unarchive' action or when retrieving a specific object, include archived ones
+        if self.action in ['unarchive', 'retrieve'] or self.request.path.endswith('/unarchive/'):
+            return Department_Superior.objects.all()
+        
+        # Default behavior for listing and other actions: only show active ones
+        return Department_Superior.objects.filter(is_archived=False)
 
     def perform_create(self, serializer):
+        # Get department and position from request data
         dept_name = self.request.data.get('dept_name', None)
+        position_title = self.request.data.get('position_title', None)
+        
+        # Get the department object
+        department = None
         if dept_name:
-            department = Department.objects.get(dept_name = dept_name)
-            serializer.save(dept = department)
-        else:
-            serializer.save()
+            try:
+                department = Department.objects.get(dept_name=dept_name)
+            except Department.DoesNotExist:
+                raise PermissionDenied(f"Department '{dept_name}' does not exist.")
+        
+        # Get the position object - using filter().first() to handle duplicate titles
+        position = None
+        if position_title:
+            # First try to find an active position
+            position = Position.objects.filter(
+                position_title=position_title, 
+                is_archived=False
+            ).first()
+            
+            # If no active position found, try any position with that title
+            if not position:
+                position = Position.objects.filter(position_title=position_title).first()
+                
+            if not position:
+                raise PermissionDenied(f"Position '{position_title}' does not exist.")
+        
+        # Save with both department and position
+        serializer.save(dept=department, position=position)
 
     def perform_update(self, serializer):
+        # Similar logic as perform_create, but only update what's provided
         dept_name = self.request.data.get('dept_name', None)
+        position_title = self.request.data.get('position_title', None)
+        
+        update_fields = {}
+        
         if dept_name:
-            department = Department.objects.get(dept_name = dept_name)
-            serializer.save(dept = department)
-        else:
-            serializer.save()
+            try:
+                department = Department.objects.get(dept_name=dept_name)
+                update_fields['dept'] = department
+            except Department.DoesNotExist:
+                raise PermissionDenied(f"Department '{dept_name}' does not exist.")
+                
+        if position_title:
+            # First try to find an active position
+            position = Position.objects.filter(
+                position_title=position_title, 
+                is_archived=False
+            ).first()
+            
+            # If no active position found, try any position with that title
+            if not position:
+                position = Position.objects.filter(position_title=position_title).first()
+                
+            if position:
+                update_fields['position'] = position
+            else:
+                raise PermissionDenied(f"Position '{position_title}' does not exist.")
+        
+        serializer.save(**update_fields)
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return Department_Superior_CreateSerializer
         return Department_Superior_Serializer
 
-    # added archive and unarchive functionsalities
-
+    # Archive and unarchive functionalities
     @action(detail = True, methods = ['post'])
-    def archive(self, request, pk = None):
+    def archive(self, request, dept_superior_id = None):
         department_superior = self.get_object()
         if department_superior.is_archived:
             return Response({"detail": "Department Superior already archived."}, status = status.HTTP_400_BAD_REQUEST)
@@ -57,7 +110,7 @@ class Department_SuperiorViewSet(viewsets.ModelViewSet):
         return Response({"detail": "Department Superior archived successfully."}, status = status.HTTP_200_OK)
 
     @action(detail = True, methods = ['post'])
-    def unarchive(self, request, pk = None):
+    def unarchive(self, request, dept_superior_id = None):
         department_superior = self.get_object()
         if not department_superior.is_archived:
             return Response({"detail": "Department Superior is not archived."}, status = status.HTTP_400_BAD_REQUEST)

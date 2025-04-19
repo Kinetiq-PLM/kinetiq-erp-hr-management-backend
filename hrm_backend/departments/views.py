@@ -19,26 +19,23 @@ class DepartmentViewSet(viewsets.ModelViewSet):
     lookup_field = 'dept_id'
 
     def get_queryset(self):
+        # For 'unarchive' action or when retrieving a specific object, include archived ones
+        if self.action in ['unarchive', 'retrieve'] or self.request.path.endswith('/unarchive/'):
+            return Department.objects.all()
+        
+        # Default behavior for listing and other actions: only show active ones
         return Department.objects.filter(is_archived = False)
 
     def perform_create(self, serializer):
-        dept_name = self.request.data.get('dept_name', None)
-        if dept_name:
-            department = Department.objects.get(dept_name = dept_name)
-            serializer.save(dept = department)
-        else:
-            serializer.save()
+        # Simply save the serializer without trying to look up existing departments
+        serializer.save()
 
     def perform_update(self, serializer):
-        dept_name = self.request.data.get('dept_name', None)
-        if dept_name:
-            department = Department.objects.get(dept_name = dept_name)
-            serializer.save(dept = department)
-        else:
-            serializer.save()
+        # Simply save the serializer without trying to look up existing departments
+        serializer.save()
 
     @action(detail = True, methods = ['post'])
-    def archive(self, request, pk = None):
+    def archive(self, request, dept_id = None):
         department = self.get_object()
         if department.is_archived:
             return Response({"detail": "Department already archived."}, status = status.HTTP_400_BAD_REQUEST)
@@ -47,7 +44,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
         return Response({"detail": "Department archived successfully."}, status = status.HTTP_200_OK)
 
     @action(detail = True, methods = ['post'])
-    def unarchive(self, request, pk = None):
+    def unarchive(self, request, dept_id = None):
         department = self.get_object()
         if not department.is_archived:
             return Response({"detail": "Department is not archived."}, status = status.HTTP_400_BAD_REQUEST)

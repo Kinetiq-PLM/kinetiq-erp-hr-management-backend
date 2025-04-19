@@ -1,7 +1,7 @@
 from django.apps import apps
 from django.db import models
 from departments.models import Department
-from positions.models import Position
+from positions.models import Position  # This imports the Position model
 from employees.models import Employee
 from django.core.exceptions import ValidationError
 import string
@@ -17,7 +17,11 @@ class Department_Superior(models.Model):
         default = ''
     )
     dept = models.ForeignKey(Department, db_column = 'dept_id', on_delete = models.CASCADE)
-    position = models.ForeignKey(Position, db_column = 'position_id', on_delete = models.CASCADE)
+    
+    # Updated this line to match the actual database structure
+    # The 'Positions' referenced in the actual database (see models_updated.py)
+    position = models.ForeignKey('positions.Position', db_column = 'position_id', on_delete = models.DO_NOTHING, blank=True, null=True)
+    
     hierarchy_level = models.PositiveIntegerField()
     is_archived = models.BooleanField(default = False)
  
@@ -38,12 +42,12 @@ class Department_Superior(models.Model):
     class Meta:
         db_table = "department_superiors"
         unique_together = ('dept', 'position')
-        managed = False;
-        verbose_name = "Department Superiors" # added para maganda tignan sa admin
+        managed = False  # Removed semicolon which is not valid Python syntax
+        verbose_name = "Department Superiors"
         verbose_name_plural = "Department Superiors"
 
     def __str__(self):
-        return f"{self.dept.dept_name} - {self.position.position_title}"
+        return f"{self.dept.dept_name} - {self.position.position_title}" if self.position else f"{self.dept.dept_name} - No Position"
 
     def get_employee(self):
         Employee = apps.get_model('employees', 'Employee')

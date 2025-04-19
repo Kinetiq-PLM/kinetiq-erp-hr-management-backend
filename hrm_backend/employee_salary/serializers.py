@@ -27,7 +27,13 @@ class Employee_Salary_Serializer(serializers.ModelSerializer):
         return f"{obj.employee.first_name} {obj.employee.last_name}"
 
     def get_estimated_monthly_salary(self, obj):
-        return obj.estimated_monthly_salary
+        # Calculate estimated monthly salary based on either base_salary or daily_rate
+        if obj.base_salary is not None:
+            return obj.base_salary  # If base_salary is already monthly
+        elif obj.daily_rate is not None:
+            # Assuming 20 working days in a month
+            return obj.daily_rate * 20
+        return None
 
 class Employee_Salary_CreateSerializer(serializers.ModelSerializer):
     employee_id = serializers.CharField(write_only = True)

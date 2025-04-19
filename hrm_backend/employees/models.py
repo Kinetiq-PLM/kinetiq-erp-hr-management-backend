@@ -32,10 +32,11 @@ class Employee(models.Model):
     first_name = models.CharField(max_length = 50)
     last_name = models.CharField(max_length = 50)
     phone = models.CharField(max_length = 20)
-    # email = models.EmailField(max_length = 255, blank = True, null = True) may gagawin pa rito sabi comment ko lang
+    # email = models.EmailField(max_length = 255, blank = True, null = True)
     employment_type = models.CharField(max_length = 20, choices = EMPLOYMENT_TYPES)
     status = models.CharField(max_length = 50, choices = STATUS_CHOICES, default = 'Active')
-    reports_to = models.CharField(max_length = 255, blank = True, null = True)
+    # Key change: Make reports_to a ForeignKey to match expected behavior
+    reports_to = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='subordinates')
     is_supervisor = models.BooleanField(default = False)
     created_at = models.DateTimeField(default = timezone.now)
     updated_at = models.DateTimeField(auto_now = True)

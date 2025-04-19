@@ -1,135 +1,125 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 
 from .models import Candidate
 from .serializers import (
     Candidate_Serializer,
     Candidate_CreateSerializer,
-    Resume_Upload_Serializer,
-    Document_Verification_Serializer,
-    Interview_Add_Serializer,
-    Offer_Update_Serializer,
-    Contract_Sign_Serializer,
+    DocumentSerializer,
+    InterviewDetailSerializer,
+    OfferDetailSerializer,
+    ContractDetailSerializer
 )
 
-class Candidate_ViewSet(viewsets.ModelViewSet):
+class IsHRMember(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if not request.user.has_perm('job_postings.view_job_posting'):
+            raise PermissionDenied("You do not have permission to view this resource.")
+        return True
+
+class CandidateViewSet(viewsets.ModelViewSet):
     queryset = Candidate.objects.all()
-    serializer_class = Candidate_Serializer
+    lookup_field = 'candidate_id'
+    # permission_classes = [IsAuthenticated, IsHRMember]
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return Candidate_CreateSerializer
-        elif self.action == 'upload_resume':
-            return Resume_Upload_Serializer
-        elif self.action == 'verify_documents':
-            return Document_Verification_Serializer
-        elif self.action == 'add_interview':
-            return Interview_Add_Serializer
-        elif self.action == 'update_offer':
-            return Offer_Update_Serializer
-        elif self.action == 'sign_contract':
-            return Contract_Sign_Serializer
         return Candidate_Serializer
 
-    @action(detail = True, methods = ['patch'], url_path = 'upload_resume')
-    def upload_resume(self, request, pk = None):
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def perform_update(self, serializer):
+        serializer.save()
+
+    @action(detail = True, methods = ['patch'], url_path = 'upload-resume')
+    def upload_resume(self, request, candidate_id = None):
         candidate = self.get_object()
-
-        directory = request.data.get('directory', 'Human_Resource_Management/Candidates/Resumes')
-        file = request.FILES.get('file')
-
-        if not file:
-            return Response({'detail': 'File not provided'}, status = status.HTTP_400_BAD_REQUEST)
-
-        api_url = 'https://s9v4t5i8ej.execute-api.ap-southeast-1.amazonaws.com/dev/api/upload-to-s3/'
-        response = requests.post(api_url, data={'directory': directory})
-
-        if response.status_code != 200:
-            return Response({'detail': 'Failed to generate pre-signed URL'}, status = status.HTTP_400_BAD_REQUEST)
-
-        data = response.json()
-        upload_url = data.get('uploadUrl')
-        file_url = data.get('fileUrl')
-
-        if not upload_url or not file_url:
-            return Response({'detail': 'Failed to get valid URLs from S3 API'}, status = status.HTTP_400_BAD_REQUEST)
-
-        files = {'file': (file.name, file.read(), file.content_type)}
-        upload_response = requests.post(upload_url, files = files)
-
-        if upload_response.status_code == 200:
-            documents = candidate.documents or {}
-            required_docs = documents.get('required', {})
-            required_docs['resume'] = {
-                'path': file_url,
-                'verified': False
-            }
-            documents['required'] = required_docs
-            candidate.documents = documents
+        resume_path = request.data.get("resume_path")
+        if resume_path:
+            candidate.resume_path = resume_path
             candidate.save()
-
-            return Response({
-                'detail': 'Resume uploaded successfully!',
-                'file_url': file_url
-            }, status = status.HTTP_200_OK)
-        else:
-            return Response({'detail': 'Failed to upload file to S3'}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    @action(detail = True, methods = ['patch'], url_path = 'update_resume')
-    def update_resume(self, request, pk = None):
-        candidate = self.get_object()
-        file_url = request.data.get('file_url')
-
-        if not file_url:
-            return Response({'detail': 'Missing file_url'}, status = 400)
-
-        documents = candidate.documents or {}
-        required_docs = documents.get('required', {})
-        required_docs['resume'] = {
-            'path': file_url,
-            'verified': False
-        }
-        documents['required'] = required_docs
-        candidate.documents = documents
-        candidate.save()
-
-        return Response({'detail': 'Resume uploaded successfully', 'documents': candidate.documents})
-
-    @action(detail = True, methods = ['patch'], url_path = 'verify-documents')
-    def verify_documents(self, request, pk = None):
-        candidate = self.get_object()
-        serializer = self.get_serializer(data = request.data)
-        serializer.is_valid(raise_exception = True)
-        candidate.documents = serializer.validated_data['documents']
-        candidate.save()
-        return Response({'message': 'Documents verified'}, status = status.HTTP_200_OK)
-
+            return Response({"message": "Resume uploaded."})
+        return Response({"error": "Missing resume_path."}, status = status.HTTP_400_BAD_REQUEST)
+ 
     @action(detail = True, methods = ['patch'], url_path = 'add-interview')
-    def add_interview(self, request, pk = None):
+    def add_interview(self, request, candidate_id = None):
         candidate = self.get_object()
-        serializer = self.get_serializer(data = request.data)
-        serializer.is_valid(raise_exception = True)
-        interviews = candidate.interview_details or []
-        interviews.extend(serializer.validated_data['interview_details'])
-        candidate.interview_details = interviews
-        candidate.save()
-        return Response({'message': 'Interview(s) added'}, status = status.HTTP_200_OK)
+        serializer = InterviewDetailSerializer(data = request.data)
+        if serializer.is_valid():
+            current = candidate.interview_details or []
+            current.append(serializer.validated_data)
+            candidate.interview_details = current
+            candidate.save()
+            return Response(InterviewDetailSerializer(serializer.validated_data).data)
+        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['get'], url_path='interviews')
+    def view_interviews(self, request, candidate_id=None):
+        candidate = self.get_object()
+        interviews = candidate.interview_details
+        if interviews:
+            return Response(InterviewDetailSerializer(interviews, many=True).data)
+        return Response({"detail": "No interviews found for this candidate."}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail = True, methods = ['patch'], url_path = 'verify-document')
+    def verify_document(self, request, candidate_id = None):
+        candidate = self.get_object()
+        doc_type = request.data.get("doc_type")  # "resume", "nbi_clearance" 
+        category = request.data.get("category")
+        verifier_id = request.data.get("verified_by")
+        
+        if category in candidate.documents and doc_type in candidate.documents[category]:
+            candidate.documents[category][doc_type]["verified"] = True
+            candidate.documents[category][doc_type]["verified_by"] = verifier_id
+            candidate.save()
+            return Response({"message": f"{doc_type} verified."})
+        return Response({"error": "Document type or category not found."}, status = status.HTTP_400_BAD_REQUEST)
 
     @action(detail = True, methods = ['patch'], url_path = 'update-offer')
-    def update_offer(self, request, pk = None):
+    def update_offer(self, request, candidate_id = None):
         candidate = self.get_object()
-        serializer = self.get_serializer(data = request.data)
-        serializer.is_valid(raise_exception = True)
-        candidate.offer_details = serializer.validated_data['offer_details']
-        candidate.save()
-        return Response({'message': 'Offer details updated'}, status = status.HTTP_200_OK)
+        serializer = OfferDetailSerializer(data=request.data)
+        if serializer.is_valid():
+            candidate.offer_details = serializer.validated_data
+            candidate.save()
+            return Response({"message": "Offer details updated."})
+        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
 
     @action(detail = True, methods = ['patch'], url_path = 'sign-contract')
-    def sign_contract(self, request, pk = None):
+    def sign_contract(self, request, candidate_id = None):
         candidate = self.get_object()
-        serializer = self.get_serializer(data = request.data)
-        serializer.is_valid(raise_exception = True)
-        candidate.contract_details = serializer.validated_data['contract_details']
+        serializer = ContractDetailSerializer(data = request.data)
+        if serializer.is_valid():
+            candidate.contract_details = serializer.validated_data
+            candidate.save()
+            return Response({"message": "Contract signed."})
+        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail = True, methods=['post'])
+    def archive(self, request, candidate_id = None):
+        candidate = self.get_object()
+        if candidate.is_archived:
+            return Response({"detail": "Candidate already archived."}, status = status.HTTP_400_BAD_REQUEST)
+        candidate.is_archived = True
         candidate.save()
-        return Response({'message': 'Contract signed'}, status = status.HTTP_200_OK)
+        return Response({"detail": "Candidate archived successfully."}, status = status.HTTP_200_OK)
+
+    @action(detail = True, methods = ['post'])
+    def unarchive(self, request, candidate_id = None):
+        candidate = self.get_object()
+        if not candidate.is_archived:
+            return Response({"detail": "Candidate is not archived."}, status = status.HTTP_400_BAD_REQUEST)
+        candidate.is_archived = False
+        candidate.save()
+        return Response({"detail": "Candidate unarchived successfully."}, status = status.HTTP_200_OK)
+
+    @action(detail = False, methods=['get'])
+    def archived(self, request):
+        archived_candidates = Candidate.objects.filter(is_archived = True)
+        serializer = self.get_serializer(archived_candidates, many = True)
+        return Response(serializer.data)
