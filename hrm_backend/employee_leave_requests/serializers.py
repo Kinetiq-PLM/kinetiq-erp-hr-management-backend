@@ -28,7 +28,7 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
             'status',
             'created_at',
             'updated_at',
-            'is_archived',  # Add this field
+            'is_archived',
         ]
         read_only_fields = ['status']
 
@@ -54,7 +54,7 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
         return "N/A"
 
 class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
-    employee_id = serializers.CharField(write_only=True)
+    employee_id = serializers.CharField(write_only=True, required=False)  # Make it optional for PATCH
     immediate_superior_id = serializers.CharField(required=False, allow_null=True, allow_blank=True, write_only=True)
     management_approval_id = serializers.CharField(required=False, allow_null=True, allow_blank=True, write_only=True)
 
@@ -68,10 +68,14 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
             'start_date',
             'end_date',
             'is_paid',
-            'status',  # Add this field
+            'status',
         ]
 
     def validate_employee_id(self, value):
+        # Skip validation during update if employee_id isn't provided
+        if self.instance is not None and not value:
+            return None
+            
         try:
             return Employee.objects.get(employee_id=value)
         except Employee.DoesNotExist:
@@ -79,9 +83,22 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         """
-        Validate the entire data set for leave request creation
+        Validate the entire data set for leave request creation or update
         """
-        # Validate dates
+        # For updates, modify validation to only check provided fields
+        if self.instance is not None:
+            # Get start_date and end_date, falling back to instance values if not provided
+            start_date = data.get('start_date', self.instance.start_date)
+            end_date = data.get('end_date', self.instance.end_date)
+            
+            # Only validate dates if both are provided or if either was changed
+            if (start_date != self.instance.start_date or end_date != self.instance.end_date) and start_date and end_date:
+                if end_date < start_date:
+                    raise serializers.ValidationError({"end_date": "End date must be after start date."})
+            
+            return data
+            
+        # For create operations, do full validation
         start_date = data.get('start_date')
         end_date = data.get('end_date')
         
@@ -90,8 +107,7 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
             if end_date < start_date:
                 raise serializers.ValidationError({"end_date": "End date must be after start date."})
             
-            # The model's clean method checks for past dates, but let's also check here
-            # to provide better error messages
+            # Check for past dates only on create
             today = timezone.now().date()
             if start_date < today:
                 raise serializers.ValidationError({"start_date": "Leave request start date cannot be in the past."})
@@ -100,7 +116,7 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
         if not data.get('leave_type'):
             raise serializers.ValidationError({"leave_type": "Leave type is required."})
         
-        # Check for overlapping leave requests
+        # Check for overlapping leave requests on create
         employee = data.get('employee_id')
         if employee and start_date and end_date:
             if Employee_Leave_Request.objects.filter(
@@ -134,11 +150,9 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
         
         # Extract and process immediate_superior_id if it exists
         immediate_superior_id = validated_data.pop('immediate_superior_id', None)
-        immediate_superior = None
         
         # Extract and process management_approval_id if it exists
         management_approval_id = validated_data.pop('management_approval_id', None)
-        management_approval = None
         
         # Create the leave request with all required fields
         try:
@@ -155,11 +169,23 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f"Failed to create leave request: {str(e)}")
 
     def update(self, instance, validated_data):
-        employee = validated_data.pop('employee_id', None)
-        if employee:
-            instance.employee = employee
-            # Update dept if employee changed
-            instance.dept = employee.dept
+        # Handle employee_id only if it's explicitly provided
+        if 'employee_id' in validated_data:
+            employee = validated_data.pop('employee_id')
+            if employee:  # Only update if there's a valid employee
+                instance.employee = employee
+                # Update dept if employee changed
+                instance.dept = employee.dept
+            
+        # Handle immediate_superior_id
+        immediate_superior_id = validated_data.pop('immediate_superior_id', None)
+        if immediate_superior_id is not None:  # Only set if explicitly provided
+            instance.immediate_superior_id = immediate_superior_id
+            
+        # Handle management_approval_id
+        management_approval_id = validated_data.pop('management_approval_id', None)
+        if management_approval_id is not None:  # Only set if explicitly provided
+            instance.management_approval_id = management_approval_id
             
         # Recalculate total_days if start_date or end_date changed
         start_date = validated_data.get('start_date', instance.start_date)
@@ -169,6 +195,7 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
             delta = end_date - start_date
             instance.total_days = delta.days + 1
             
+        # Update all other fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
             
