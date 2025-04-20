@@ -20,7 +20,17 @@ class Job_Posting_ViewSet(viewsets.ModelViewSet):
     queryset = Job_Posting.objects.all()
     lookup_field = 'job_id'
     # permission_classes = [IsAuthenticated, IsHRMember]
-
+    
+    def create(self, request, *args, **kwargs):
+        print(f"Request data: {request.data}")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print(f"Validation errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
     def get_queryset(self):
         return Job_Posting.objects.filter(is_archived = False)
 
@@ -63,7 +73,10 @@ class Job_Posting_ViewSet(viewsets.ModelViewSet):
 
     @action(detail = False, methods = ['post'])
     def request_job_posting(self, request):
+        print(f"Incoming request data: {request.data}")
         serializer = self.get_serializer(data = request.data)
-        serializer.is_valid(raise_exception = True)
+        if not serializer.is_valid():
+            print(f"Validation errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         instance = serializer.save()
         return Response(self.get_serializer(instance).data, status = status.HTTP_201_CREATED)
