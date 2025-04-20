@@ -24,8 +24,31 @@ class Position(models.Model):
     
     # validation errors
     def clean(self):
-        if Position.objects.filter(position_title = self.position_title, is_archived = False).exists():
+        # Validate unique position title
+        if not self.pk and Position.objects.filter(position_title=self.position_title, is_archived=False).exists():
             raise ValidationError(f"A position title with the name '{self.position_title}' already exists and is active.")
+        
+        # Validate salary based on employment type
+        if self.employment_type == 'Regular':
+            if self.min_salary < 0:
+                raise ValidationError("Minimum salary cannot be negative for Regular positions.")
+            if self.max_salary < self.min_salary:
+                raise ValidationError("Maximum salary must be greater than or equal to minimum salary.")
+            if self.typical_duration_days is not None:
+                raise ValidationError("Regular positions should not have a duration specified.")
+        else:  # Contractual or Seasonal
+            if self.min_salary < 500 or self.min_salary > 10000:
+                raise ValidationError("Minimum salary must be between 500 and 10,000 for non-Regular positions.")
+            if self.max_salary < self.min_salary:
+                raise ValidationError("Maximum salary must be greater than or equal to minimum salary.")
+            
+            # Validate duration days
+            if self.employment_type == 'Contractual':
+                if not self.typical_duration_days or self.typical_duration_days < 30 or self.typical_duration_days > 180:
+                    raise ValidationError("Contractual positions must have duration between 30 and 180 days.")
+            elif self.employment_type == 'Seasonal':
+                if not self.typical_duration_days or self.typical_duration_days < 1 or self.typical_duration_days > 29:
+                    raise ValidationError("Seasonal positions must have duration between 1 and 29 days.")
 
     def save(self, *args, **kwargs):
         if not self.position_id:
