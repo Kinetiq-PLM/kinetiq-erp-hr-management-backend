@@ -43,14 +43,18 @@ class PositionViewSet(viewsets.ModelViewSet):
         position.save()
         return Response({"detail": "Position archived successfully."}, status = status.HTTP_200_OK)
 
-    @action(detail = True, methods = ['post'])
-    def unarchive(self, request, pk = None):
-        position = self.get_object()
-        if not position.is_archived:
-            return Response({"detail": "Position is not archived."}, status = status.HTTP_400_BAD_REQUEST)
-        position.is_archived = False
-        position.save()
-        return Response({"detail": "Position unarchived successfully."}, status = status.HTTP_200_OK)
+    @action(detail=True, methods=['post'])
+    def unarchive(self, request, pk=None):
+        try:
+            # Get the position by ID, handling URL decoding
+            position = Position.objects.get(pk=pk)
+            position.is_archived = False
+            position.save()
+            return Response({"message": "Position unarchived successfully"}, status=status.HTTP_200_OK)
+        except Position.DoesNotExist:
+            return Response({"detail": f"Position with ID {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods = ['get'])
     def archived(self, request):

@@ -12,4 +12,6 @@ app_name = 'positions'
 urlpatterns = [
     # Include the default router URLs
     path('', include(router.urls)),
+    # Add an explicit path for unarchive with string primary key
+    path('positions/<str:pk>/unarchive/', PositionViewSet.as_view({'post': 'unarchive'}), name='position-unarchive'),
 ]
