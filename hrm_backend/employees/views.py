@@ -47,23 +47,29 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
     # added archive and unarchive functionsalities
 
-    @action(detail = True, methods = ['post'])
-    def archive(self, request, pk = None):
-        employee = self.get_object()
-        if employee.is_archived:
-            return Response({"detail": "Employee already archived."}, status = status.HTTP_400_BAD_REQUEST)
-        employee.is_archived = True
-        employee.save()
-        return Response({"detail": "Employee archived successfully."}, status = status.HTTP_200_OK)
+    @action(detail=True, methods=['post'])
+    def archive(self, request, employee_id=None):
+        try:
+            employee = self.get_object()
+            employee.is_archived = True
+            employee.save()
+            return Response({"message": "Employee archived successfully"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def unarchive(self, request, employee_id=None):
+        try:
+            # Get the employee by employee_id
+            employee = Employee.objects.get(employee_id=employee_id)
+            employee.is_archived = False
+            employee.save()
+            return Response({"message": "Employee unarchived successfully"}, status=status.HTTP_200_OK)
+        except Employee.DoesNotExist:
+            return Response({"detail": "Employee not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail = True, methods=['post'])
-    def unarchive(self, request, pk = None):
-        employee = self.get_object()
-        if not employee.is_archived:
-            return Response({"detail": "Employee is not archived."}, status = status.HTTP_400_BAD_REQUEST)
-        employee.is_archived = False
-        employee.save()
-        return Response({"detail": "Employee unarchived successfully."}, status = status.HTTP_200_OK)
 
     @action(detail = False, methods=['get'])
     def archived(self, request):
