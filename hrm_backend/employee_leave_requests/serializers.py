@@ -28,6 +28,7 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
             'status',
             'created_at',
             'updated_at',
+            'is_archived',  # Add this field
         ]
         read_only_fields = ['status']
 
@@ -54,7 +55,6 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
 
 class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
     employee_id = serializers.CharField(write_only=True)
-    # Make sure immediate_superior_id and management_approval_id are optional
     immediate_superior_id = serializers.CharField(required=False, allow_null=True, allow_blank=True, write_only=True)
     management_approval_id = serializers.CharField(required=False, allow_null=True, allow_blank=True, write_only=True)
 
@@ -68,6 +68,7 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
             'start_date',
             'end_date',
             'is_paid',
+            'status',  # Add this field
         ]
 
     def validate_employee_id(self, value):

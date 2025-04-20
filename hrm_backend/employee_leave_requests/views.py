@@ -138,21 +138,27 @@ class Employee_Leave_Request_ViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def archive(self, request, leave_id=None):
         leave = self.get_object()
-        if leave.status == "Archived":
+        if leave.is_archived:
             return Response({"detail": "Leave request already archived."}, status=status.HTTP_400_BAD_REQUEST)
-        leave.status = "Archived"
-        leave.is_archived = True  # Make sure to set is_archived flag too
-        leave.save()
+        
+        # Only modify the is_archived flag, keep the original status
+        leave.is_archived = True
+        
+        # Save with specific fields to avoid any other interference
+        leave.save(update_fields=['is_archived', 'updated_at'])
         return Response({"detail": "Leave request archived successfully."}, status=status.HTTP_200_OK)
-
+    
     @action(detail=True, methods=['post'])
     def unarchive(self, request, leave_id=None):
         leave = self.get_object()
-        if leave.status != "Archived":
+        if not leave.is_archived:
             return Response({"detail": "Leave request is not archived."}, status=status.HTTP_400_BAD_REQUEST)
-        leave.status = "Pending"
-        leave.is_archived = False  # Reset is_archived flag
-        leave.save()
+        
+        # Only modify the is_archived flag, keep the original status
+        leave.is_archived = False
+        
+        # Save with specific fields to avoid any other interference
+        leave.save(update_fields=['is_archived', 'updated_at'])
         return Response({"detail": "Leave request unarchived successfully."}, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['get'])
