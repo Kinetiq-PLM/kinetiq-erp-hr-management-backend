@@ -5,8 +5,8 @@ from .models import (
 from job_posting.models import Job_Posting as JobPosting
 
 class Candidate_Serializer(serializers.ModelSerializer):
-    job_id = serializers.CharField(write_only = True)
-    position_title = serializers.CharField(source = 'job.position_title', read_only = True)
+    job_id = serializers.SerializerMethodField()
+    position_title = serializers.CharField(source='job.position_title', read_only=True)
 
     class Meta:
         model = Candidate
@@ -28,6 +28,10 @@ class Candidate_Serializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = ['candidate_id', 'created_at', 'updated_at']
+    
+    # Add this method to get the job_id
+    def get_job_id(self, obj):
+        return obj.job.job_id if obj.job else None
 
 class Candidate_CreateSerializer(serializers.ModelSerializer):
     job_id = serializers.CharField(write_only = True)
