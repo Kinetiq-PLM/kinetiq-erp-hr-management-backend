@@ -26,6 +26,7 @@ class Candidate_Serializer(serializers.ModelSerializer):
             'contract_details',
             'created_at',
             'updated_at',
+            'is_archived',
         ]
         read_only_fields = ['candidate_id', 'created_at', 'updated_at']
     
@@ -34,7 +35,8 @@ class Candidate_Serializer(serializers.ModelSerializer):
         return obj.job.job_id if obj.job else None
 
 class Candidate_CreateSerializer(serializers.ModelSerializer):
-    job_id = serializers.CharField(write_only = True)
+    job_id = serializers.CharField(write_only=True)
+    documents = serializers.JSONField(required=False, allow_null=True)
 
     class Meta:
         model = Candidate
@@ -54,15 +56,39 @@ class Candidate_CreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         job_id = validated_data.pop('job_id')
-        job = JobPosting.objects.get(job_id = job_id)
+        job = JobPosting.objects.get(job_id=job_id)
         validated_data['job'] = job 
         validated_data['candidate_id'] = Candidate.generate_candidate_id()
+        
+        # Handle documents field
+        if 'documents' in validated_data and validated_data['documents'] is not None:
+            # If documents comes as a string, parse it
+            if isinstance(validated_data['documents'], str):
+                import json
+                try:
+                    validated_data['documents'] = json.loads(validated_data['documents'])
+                except json.JSONDecodeError:
+                    # If there's an error parsing, default to empty dict
+                    validated_data['documents'] = {}
+        
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
         job_id = validated_data.pop('job_id', None)
         if job_id:
-            instance.job = JobPosting.objects.get(job_id = job_id)
+            instance.job = JobPosting.objects.get(job_id=job_id)
+        
+        # Handle documents field
+        if 'documents' in validated_data and validated_data['documents'] is not None:
+            # If documents comes as a string, parse it
+            if isinstance(validated_data['documents'], str):
+                import json
+                try:
+                    validated_data['documents'] = json.loads(validated_data['documents'])
+                except json.JSONDecodeError:
+                    # If there's an error parsing, retain the existing documents
+                    validated_data.pop('documents')
+        
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
