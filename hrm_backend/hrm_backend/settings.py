@@ -150,7 +150,7 @@ WSGI_APPLICATION = 'hrm_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'KINETIQ-RDS-HRM',
+        'NAME': 'KINETIQ-RDS-HRM-V5',
         'USER': 'postgres',
         'PASSWORD': 'kinetiq',
         'HOST': 'localhost',
