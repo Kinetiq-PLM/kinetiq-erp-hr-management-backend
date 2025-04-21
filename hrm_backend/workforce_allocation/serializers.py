@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import Workforce_Allocation
 from employees.models import Employee
-import uuid
 
 class Workforce_Allocation_Serializer(serializers.ModelSerializer):
     employee_name = serializers.SerializerMethodField(read_only=True)
@@ -40,7 +39,7 @@ class Workforce_Allocation_Serializer(serializers.ModelSerializer):
         return None
 
 class Workforce_Allocation_CreateSerializer(serializers.ModelSerializer):
-    employee_name = serializers.SerializerMethodField(read_only=True)
+    employee_name = serializers.SerializerMethodField(read_only=True)  # Added proper definition
 
     class Meta:
         model = Workforce_Allocation
@@ -50,6 +49,7 @@ class Workforce_Allocation_CreateSerializer(serializers.ModelSerializer):
             'requesting_dept_id',
             'current_dept_id',
             'hr_approver',
+            'employee',
             'employee_name',
             'status',
             'start_date',
@@ -58,37 +58,25 @@ class Workforce_Allocation_CreateSerializer(serializers.ModelSerializer):
             'rejection_reason',
         ]
 
-    def validate(self, data):
-        approval_status = data.get("approval_status")
-        hr_approver = data.get("hr_approver")
-        rejection_reason = data.get("rejection_reason")
-
-        if approval_status == "Approved" and not hr_approver:
-            raise serializers.ValidationError("HR approver is required when status is 'Approved'.")
-
-        if approval_status == "Rejected" and not rejection_reason:
-            raise serializers.ValidationError("Rejection reason is required when status is 'Rejected'.")
-
-        return data
-
     def get_employee_name(self, obj):
         if obj.employee:
             return f"{obj.employee.first_name} {obj.employee.last_name}"
         return None
 
-    def create(self, validated_data):
-        from uuid import uuid4
-        validated_data['request_id'] = f"REQ-{uuid4()}"
-        validated_data['allocation_id'] = f"ALLOC-{uuid4()}"
-
-        hr_approver = validated_data.get('hr_approver', None)
-        approval_status = validated_data.get('approval_status', 'Pending')
-
-        workforce_allocation = Workforce_Allocation.objects.create(**validated_data)
-
-        self.update_status(workforce_allocation)
-
-        return workforce_allocation
+    def validate(self, data):
+        """Validate the allocation data."""
+        # Get approval status
+        approval_status = data.get("approval_status")
+        
+        # Only enforce HR approver for "Approved" if not already skipping validation
+        if approval_status == "Approved" and not data.get("hr_approver"):
+            raise serializers.ValidationError({"hr_approver": "HR approver is required when status is 'Approved'."})
+        
+        # Only enforce rejection reason for "Rejected"
+        if approval_status == "Rejected" and not data.get("rejection_reason"):
+            raise serializers.ValidationError({"rejection_reason": "Rejection reason is required when status is 'Rejected'."})
+        
+        return data
 
     def update_status(self, allocation):
         if allocation.approval_status == 'Approved':
@@ -116,16 +104,6 @@ class Workforce_Allocation_RequestSerializer(serializers.ModelSerializer):
         if obj.employee:
             return f"{obj.employee.first_name} {obj.employee.last_name}"
         return None
-
-    def create(self, validated_data):
-        from uuid import uuid4
-        validated_data['request_id'] = f"REQ-{uuid4()}"
-        validated_data['allocation_id'] = f"ALLOC-{uuid4()}"
-        workforce_allocation = Workforce_Allocation.objects.create(**validated_data)
-
-        self.update_status(workforce_allocation)
-
-        return workforce_allocation
 
     def update_status(self, allocation):
         if allocation.approval_status == 'Approved':
