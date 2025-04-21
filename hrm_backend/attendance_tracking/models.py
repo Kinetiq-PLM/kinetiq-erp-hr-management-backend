@@ -50,7 +50,6 @@ class Attendance_Tracking(models.Model):
         super().save(*args, **kwargs)
 
     def mark_late(self):
-        """Method to mark attendance as late."""
         if self.time_in and self.time_out:
             standard_start_time = timezone.make_aware(timezone.datetime(self.date.year, self.date.month, self.date.day, 9, 0))
             if self.time_in > standard_start_time:
@@ -59,18 +58,15 @@ class Attendance_Tracking(models.Model):
                 self.save()
 
     def mark_undertime(self, expected_hours = 8):
-        """Method to mark attendance as undertime."""
         if self.work_hours and self.work_hours < expected_hours:
             self.status = 'Half Day' if self.work_hours >= (expected_hours / 2) else 'Absent'
             self.undertime_hours = expected_hours - self.work_hours
             self.save()
 
     def mark_on_leave(self, leave_type = "Paid"):
-        """Method to mark attendance as On Leave."""
         self.status = "On Leave"
         self.holiday_type = leave_type
         self.save()
-
     class Meta:
         db_table = "attendance_tracking"
         verbose_name = "Attendance Tracking"

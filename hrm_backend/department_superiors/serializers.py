@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Department_Superior, Position, Department
+from .models import Department_Superior
 from employees.models import Employee
 from rest_framework.exceptions import ValidationError
 

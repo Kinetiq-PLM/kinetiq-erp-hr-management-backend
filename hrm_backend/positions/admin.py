@@ -21,8 +21,6 @@ class PositionAdmin(admin.ModelAdmin):
     search_fields = ('position_title', 'position_id', 'salary_grade')
     readonly_fields = ('position_id', 'created_at', 'updated_at')
 
-    # added new colums for edit and archive
-
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.filter(is_archived = False)

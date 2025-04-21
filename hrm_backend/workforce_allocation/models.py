@@ -7,7 +7,7 @@ class Workforce_Allocation(models.Model):
     requesting_dept_id = models.CharField(max_length = 255)
     required_skills = models.TextField()
     task_description = models.TextField()
-    updated_at = models.DateTimeField(auto_now=True)  # Add this field
+    updated_at = models.DateTimeField(auto_now = True)
     employee = models.ForeignKey(
         Employee,
         on_delete=models.SET_NULL,
@@ -24,7 +24,7 @@ class Workforce_Allocation(models.Model):
         related_name='approved_allocations'
     )
     approval_status = models.CharField(
-        max_length=20,
+        max_length = 20,
         choices=[
             ('Pending', 'Pending'),
             ('Approved', 'Approved'),
@@ -34,7 +34,7 @@ class Workforce_Allocation(models.Model):
         default='Pending'
     )
     status = models.CharField(
-        max_length=20,
+        max_length = 20,
         choices=[
             ('Draft', 'Draft'),
             ('Submitted', 'Submitted'),
@@ -49,7 +49,7 @@ class Workforce_Allocation(models.Model):
     rejection_reason = models.TextField(null = True, blank = True)
     submitted_at = models.DateTimeField(null = True, blank = True)
     approved_at = models.DateTimeField(null = True, blank = True)
-    is_archived = models.BooleanField(default = False)  # added archive and unarchive logic
+    is_archived = models.BooleanField(default = False)
 
     class Meta:
         db_table = 'workforce_allocation'

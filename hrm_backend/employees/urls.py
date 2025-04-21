@@ -8,5 +8,5 @@ router.register(r'', EmployeeViewSet)
 app_name = 'employees'
 urlpatterns = [
     path('', include(router.urls)),
-    path('archived/', EmployeeViewSet.as_view({'get': 'archived'}), name='archived-employees'),
+    path('archived/', EmployeeViewSet.as_view({'get': 'archived'}), name = 'archived-employees'),
 ]

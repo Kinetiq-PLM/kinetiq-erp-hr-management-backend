@@ -35,8 +35,7 @@ class Employee(models.Model):
     # email = models.EmailField(max_length = 255, blank = True, null = True)
     employment_type = models.CharField(max_length = 20, choices = EMPLOYMENT_TYPES)
     status = models.CharField(max_length = 50, choices = STATUS_CHOICES, default = 'Active')
-    # Key change: Make reports_to a ForeignKey to match expected behavior
-    reports_to = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='subordinates')
+    reports_to = models.ForeignKey('self', on_delete = models.SET_NULL, null = True, blank = True, related_name = 'subordinates')
     is_supervisor = models.BooleanField(default = False)
     created_at = models.DateTimeField(default = timezone.now)
     updated_at = models.DateTimeField(auto_now = True)
@@ -54,10 +53,10 @@ class Employee(models.Model):
         if not name_regex.match(self.last_name):
             raise ValidationError(f"Last name '{self.last_name}' contains invalid characters. Only letters and basic punctuation are allowed.")
         
-        if Employee.objects.filter(phone=self.phone, is_archived = False).exclude(pk=self.pk).exists():
+        if Employee.objects.filter(phone = self.phone, is_archived = False).exclude(pk = self.pk).exists():
             raise ValidationError(f"An active employee with the phone number '{self.phone}' already exists.")
         
-        if Employee.objects.filter(first_name=self.first_name, last_name=self.last_name, is_archived = False).exclude(pk=self.pk).exists():
+        if Employee.objects.filter(first_name=self.first_name, last_name=self.last_name, is_archived = False).exclude(pk = self.pk).exists():
             raise ValidationError(f"An active employee with the name '{self.first_name} {self.last_name}' already exists.")
         
         if self.status == 'Inactive' and self.is_supervisor:

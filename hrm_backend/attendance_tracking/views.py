@@ -1,8 +1,13 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import (
+    viewsets,
+    permissions,
+    status,
+)
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Attendance_Tracking
 from calendar_dates.models import Calendar_Date
+from employees.models import Employee
 from .serializers import (
     Attendance_Tracking_Serializer,
     Attendance_Tracking_CreateSerializer,
@@ -10,7 +15,6 @@ from .serializers import (
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
-from employees.models import Employee
 from datetime import date
 
 class IsHRMember(permissions.BasePermission):

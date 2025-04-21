@@ -1,4 +1,8 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import (
+    viewsets,
+    permissions,
+    status,
+)
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Job_Posting
@@ -23,13 +27,13 @@ class Job_Posting_ViewSet(viewsets.ModelViewSet):
     
     def create(self, request, *args, **kwargs):
         print(f"Request data: {request.data}")
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data = request.data)
         if not serializer.is_valid():
             print(f"Validation errors: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(serializer.data, status = status.HTTP_201_CREATED, headers = headers)
     
     def get_queryset(self):
         return Job_Posting.objects.filter(is_archived = False)

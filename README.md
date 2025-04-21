@@ -22,7 +22,7 @@ A Django-based backend system for managing human resources including employee re
 - **Leave Request**: [Complete]
 - **Leave Balances**: [Complete]
 - **Job Posting**: [Complete]
-- **Recruitment (Candidates, Interviews)**: ~95% Done
+- **Recruitment (Candidates, Interviews)**: [Complete]
 
 ### Payroll & Calendar Management
 - **Payroll**: [Complete]

@@ -40,7 +40,6 @@ class Employee_Leave_RequestAdmin(admin.ModelAdmin):
     def get_dept_id(self, obj):
         return obj.employee.dept.dept_id if obj.employee and obj.employee.dept else None
 
-
     def get_dept_name(self, obj):
             try:
                 return obj.employee.dept.dept_name
@@ -52,8 +51,8 @@ class Employee_Leave_RequestAdmin(admin.ModelAdmin):
         if obj.employee and obj.employee.dept and obj.employee.position:
             try:
                 superior = Department_Superior.objects.get(
-                    dept=obj.employee.dept,
-                    position=obj.employee.position,
+                    dept = obj.employee.dept,
+                    position = obj.employee.position,
                     is_archived = False
                 )
                 return superior.dept_superior_id

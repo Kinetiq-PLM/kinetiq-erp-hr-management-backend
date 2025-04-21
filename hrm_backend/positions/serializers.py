@@ -42,7 +42,6 @@ class Position_CreateSerializer(serializers.ModelSerializer):
         max_salary = data.get('max_salary')
         typical_duration_days = data.get('typical_duration_days')
         
-        # Employment type validations
         if employment_type == 'Regular':
             if min_salary < 0:
                 raise serializers.ValidationError({"min_salary": "Minimum salary cannot be negative for Regular positions."})
@@ -60,7 +59,6 @@ class Position_CreateSerializer(serializers.ModelSerializer):
                 if not typical_duration_days or typical_duration_days < 1 or typical_duration_days > 29:
                     raise serializers.ValidationError({"typical_duration_days": "Seasonal positions must have duration between 1 and 29 days."})
         
-        # Common validations
         if max_salary < min_salary:
             raise serializers.ValidationError({"max_salary": "Maximum salary must be greater than or equal to minimum salary."})
             

@@ -1,4 +1,8 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import (
+    viewsets,
+    permissions,
+    status,
+)
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Employee_Leave_Request
@@ -7,7 +11,11 @@ from .serializers import (
     Employee_Leave_Request_CreateSerializer,
 )
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied, APIException, ValidationError
+from rest_framework.exceptions import (
+    PermissionDenied,
+    APIException, 
+    ValidationError,
+)
 from rest_framework.parsers import JSONParser
 from django.db import IntegrityError
 import re
@@ -35,20 +43,16 @@ class Employee_Leave_Request_ViewSet(viewsets.ModelViewSet):
         return Employee_Leave_Request_Serializer
     
     def create(self, request, *args, **kwargs):
-        """
-        Override create method to provide better error handling and detailed validation errors
-        """
         serializer = self.get_serializer(data=request.data)
         
         try:
-            serializer.is_valid(raise_exception=True)
+            serializer.is_valid(raise_exception = True)
             self.perform_create(serializer)
             return Response(
                 self.get_serializer_class()(serializer.instance).data, 
                 status=status.HTTP_201_CREATED
             )
         except ValidationError as e:
-            # Format validation errors for better client-side consumption
             return Response(
                 {"detail": "Validation error", "errors": e.detail}, 
                 status=status.HTTP_400_BAD_REQUEST
@@ -68,25 +72,19 @@ class Employee_Leave_Request_ViewSet(viewsets.ModelViewSet):
         try:
             serializer.save()
         except IntegrityError as e:
-            # Extract the error message from the PostgreSQL exception
             error_message = str(e)
             
-            # Check if it's one of our leave balance validation errors
             if "Insufficient" in error_message or "leave cannot exceed" in error_message:
-                # Use regex to extract the clean error message from the database error
                 match = re.search(r'DETAIL:\s*(.*?)(?:\n|$)', error_message)
                 if match:
                     clean_message = match.group(1)
                 else:
-                    # If regex fails, use the whole message but clean it up
                     clean_message = error_message.replace('IntegrityError:', '').strip()
                 
                 raise LeaveBalanceException(detail=clean_message)
             else:
-                # For other integrity errors
                 raise APIException(detail=f"Error creating leave request: {error_message}")
         except Exception as e:
-            # Log the error (ideally to a proper logging system)
             print(f"Error creating leave request: {str(e)}")
             raise APIException(detail=f"An unexpected error occurred: {str(e)}")
 
@@ -96,10 +94,10 @@ class Employee_Leave_Request_ViewSet(viewsets.ModelViewSet):
         """
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(instance, data = request.data, partial = partial)
         
         try:
-            serializer.is_valid(raise_exception=True)
+            serializer.is_valid(raise_exception = True)
             self.perform_update(serializer)
             return Response(
                 self.get_serializer_class()(serializer.instance).data
@@ -135,34 +133,28 @@ class Employee_Leave_Request_ViewSet(viewsets.ModelViewSet):
             print(f"Error updating leave request: {str(e)}")
             raise APIException(detail=f"An unexpected error occurred: {str(e)}")
 
-    @action(detail=True, methods=['post'])
-    def archive(self, request, leave_id=None):
+    @action(detail = True, methods = ['post'])
+    def archive(self, request, leave_id = None):
         leave = self.get_object()
         if leave.is_archived:
-            return Response({"detail": "Leave request already archived."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Leave request already archived."}, status = status.HTTP_400_BAD_REQUEST)
         
-        # Only modify the is_archived flag, keep the original status
         leave.is_archived = True
-        
-        # Save with specific fields to avoid any other interference
-        leave.save(update_fields=['is_archived', 'updated_at'])
-        return Response({"detail": "Leave request archived successfully."}, status=status.HTTP_200_OK)
+        leave.save(update_fields = ['is_archived', 'updated_at'])
+        return Response({"detail": "Leave request archived successfully."}, status = status.HTTP_200_OK)
     
-    @action(detail=True, methods=['post'])
-    def unarchive(self, request, leave_id=None):
+    @action(detail = True, methods = ['post'])
+    def unarchive(self, request, leave_id = None):
         leave = self.get_object()
         if not leave.is_archived:
-            return Response({"detail": "Leave request is not archived."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Leave request is not archived."}, status = status.HTTP_400_BAD_REQUEST)
         
-        # Only modify the is_archived flag, keep the original status
         leave.is_archived = False
-        
-        # Save with specific fields to avoid any other interference
         leave.save(update_fields=['is_archived', 'updated_at'])
-        return Response({"detail": "Leave request unarchived successfully."}, status=status.HTTP_200_OK)
+        return Response({"detail": "Leave request unarchived successfully."}, status = status.HTTP_200_OK)
     
-    @action(detail=False, methods=['get'])
+    @action(detail = False, methods = ['get'])
     def archived(self, request):
-        archived_leave_requests = Employee_Leave_Request.objects.filter(is_archived=True)
-        serializer = self.get_serializer(archived_leave_requests, many=True)
+        archived_leave_requests = Employee_Leave_Request.objects.filter(is_archived = True)
+        serializer = self.get_serializer(archived_leave_requests, many = True)
         return Response(serializer.data)

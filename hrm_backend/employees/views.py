@@ -1,4 +1,8 @@
-from rest_framework import permissions, status, viewsets
+from rest_framework import (
+    permissions,
+    status,
+    viewsets,
+)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import (
@@ -7,7 +11,6 @@ from .models import (
 )
 from .serializers import (
     Employee_Serializer,
-
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
@@ -47,37 +50,35 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
     # added archive and unarchive functionsalities
 
-    @action(detail=True, methods=['post'])
-    def archive(self, request, employee_id=None):
+    @action(detail = True, methods = ['post'])
+    def archive(self, request, employee_id = None):
         try:
             employee = self.get_object()
             employee.is_archived = True
             employee.save()
-            return Response({"message": "Employee archived successfully"}, status=status.HTTP_200_OK)
+            return Response({"message": "Employee archived successfully"}, status = status.HTTP_200_OK)
         except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": str(e)}, status = status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=True, methods=['post'])
-    def unarchive(self, request, employee_id=None):
+    @action(detail = True, methods = ['post'])
+    def unarchive(self, request, employee_id = None):
         try:
-            # Get the employee by employee_id
-            employee = Employee.objects.get(employee_id=employee_id)
+            employee = Employee.objects.get(employee_id = employee_id)
             employee.is_archived = False
             employee.save()
-            return Response({"message": "Employee unarchived successfully"}, status=status.HTTP_200_OK)
+            return Response({"message": "Employee unarchived successfully"}, status = status.HTTP_200_OK)
         except Employee.DoesNotExist:
-            return Response({"detail": "Employee not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "Employee not found"}, status = status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": str(e)}, status = status.HTTP_400_BAD_REQUEST)
 
 
-    @action(detail = False, methods=['get'])
+    @action(detail = False, methods = ['get'])
     def archived(self, request):
         archived_employees = Employee.objects.filter(is_archived = True)
         serializer = self.get_serializer(archived_employees, many = True)
         return Response(serializer.data)
 
-    # In views.py - Add this temporarily for debugging
     def create(self, request, *args, **kwargs):
         print("Received data:", request.data)
         return super().create(request, *args, **kwargs)

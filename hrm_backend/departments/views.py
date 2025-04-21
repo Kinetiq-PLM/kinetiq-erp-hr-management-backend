@@ -1,4 +1,8 @@
-from rest_framework import permissions, status, viewsets
+from rest_framework import (
+    permissions,
+    status,
+    viewsets
+)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Department
@@ -19,19 +23,15 @@ class DepartmentViewSet(viewsets.ModelViewSet):
     lookup_field = 'dept_id'
 
     def get_queryset(self):
-        # For 'unarchive' action or when retrieving a specific object, include archived ones
         if self.action in ['unarchive', 'retrieve'] or self.request.path.endswith('/unarchive/'):
             return Department.objects.all()
         
-        # Default behavior for listing and other actions: only show active ones
         return Department.objects.filter(is_archived = False)
 
     def perform_create(self, serializer):
-        # Simply save the serializer without trying to look up existing departments
         serializer.save()
 
     def perform_update(self, serializer):
-        # Simply save the serializer without trying to look up existing departments
         serializer.save()
 
     @action(detail = True, methods = ['post'])

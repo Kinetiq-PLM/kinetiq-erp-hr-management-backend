@@ -1,13 +1,13 @@
 from django.contrib import admin
 from .models import Payroll
 
-@admin.action(description="Mark payroll as Finalized")
+@admin.action(description = "Mark payroll as Finalized")
 def mark_as_finalized(modeladmin, request, queryset):
     queryset.update(status='Finalized')
 
-@admin.action(description="Lock payroll")
+@admin.action(description = "Lock payroll")
 def lock_payroll(modeladmin, request, queryset):
-    queryset.update(status='Locked')
+    queryset.update(status = 'Locked')
 
 @admin.register(Payroll)
 class PayrollAdmin(admin.ModelAdmin):

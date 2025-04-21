@@ -39,7 +39,7 @@ class Workforce_Allocation_Serializer(serializers.ModelSerializer):
         return None
 
 class Workforce_Allocation_CreateSerializer(serializers.ModelSerializer):
-    employee_name = serializers.SerializerMethodField(read_only=True)  # Added proper definition
+    employee_name = serializers.SerializerMethodField(read_only = True)
 
     class Meta:
         model = Workforce_Allocation
@@ -65,14 +65,11 @@ class Workforce_Allocation_CreateSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Validate the allocation data."""
-        # Get approval status
         approval_status = data.get("approval_status")
         
-        # Only enforce HR approver for "Approved" if not already skipping validation
         if approval_status == "Approved" and not data.get("hr_approver"):
             raise serializers.ValidationError({"hr_approver": "HR approver is required when status is 'Approved'."})
         
-        # Only enforce rejection reason for "Rejected"
         if approval_status == "Rejected" and not data.get("rejection_reason"):
             raise serializers.ValidationError({"rejection_reason": "Rejection reason is required when status is 'Rejected'."})
         
@@ -88,7 +85,7 @@ class Workforce_Allocation_CreateSerializer(serializers.ModelSerializer):
         allocation.save()
 
 class Workforce_Allocation_RequestSerializer(serializers.ModelSerializer):
-    employee_name = serializers.SerializerMethodField(read_only=True)
+    employee_name = serializers.SerializerMethodField(read_only = True)
 
     class Meta:
         model = Workforce_Allocation

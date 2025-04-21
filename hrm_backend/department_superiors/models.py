@@ -1,8 +1,6 @@
 from django.apps import apps
 from django.db import models
 from departments.models import Department
-from positions.models import Position  # This imports the Position model
-from employees.models import Employee
 from django.core.exceptions import ValidationError
 import string
 import random
@@ -17,10 +15,8 @@ class Department_Superior(models.Model):
         default = ''
     )
     dept = models.ForeignKey(Department, db_column = 'dept_id', on_delete = models.CASCADE)
-    
-    # Updated this line to match the actual database structure
-    # The 'Positions' referenced in the actual database (see models_updated.py)
-    position = models.ForeignKey('positions.Position', db_column = 'position_id', on_delete = models.DO_NOTHING, blank=True, null=True)
+
+    position = models.ForeignKey('positions.Position', db_column = 'position_id', on_delete = models.DO_NOTHING, blank = True, null = True)
     
     hierarchy_level = models.PositiveIntegerField()
     is_archived = models.BooleanField(default = False)
@@ -42,7 +38,7 @@ class Department_Superior(models.Model):
     class Meta:
         db_table = "department_superiors"
         unique_together = ('dept', 'position')
-        managed = False  # Removed semicolon which is not valid Python syntax
+        managed = False
         verbose_name = "Department Superiors"
         verbose_name_plural = "Department Superiors"
 

@@ -36,5 +36,5 @@ class Calendar_Date(models.Model):
 
     class Meta:
         db_table = 'calendar_dates'
-        verbose_name = "Calendar Dates" # added para maganda tignan sa admin
+        verbose_name = "Calendar Dates"
         verbose_name_plural = "Calendar Dates"

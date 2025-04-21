@@ -1,4 +1,8 @@
-from rest_framework import generics, permissions, status, viewsets
+from rest_framework import (
+    permissions,
+    status,
+    viewsets,
+)
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Workforce_Allocation
@@ -7,11 +11,10 @@ from .serializers import (
     Workforce_Allocation_CreateSerializer,
     Workforce_Allocation_RequestSerializer
 )
+from django.db import IntegrityError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 import uuid
-from django.db import IntegrityError
-from django.shortcuts import get_object_or_404
 
 class IsHRMember(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -28,30 +31,20 @@ class Workforce_AllocationViewSet(viewsets.ModelViewSet):
         return Workforce_Allocation.objects.filter(is_archived = False)
 
     def get_object(self):
-        """
-        Override get_object to allow retrieving archived items in specific actions
-        """
-        # For unarchive action, include archived objects in the lookup
         if self.action == 'unarchive':
-            # Get all objects including archived ones
             queryset = Workforce_Allocation.objects.all()
-            
-            # Perform the lookup using the allocation_id
             lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
             filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
             
             from django.shortcuts import get_object_or_404
             obj = get_object_or_404(queryset, **filter_kwargs)
             
-            # Check permissions
             self.check_object_permissions(self.request, obj)
             return obj
         
-        # For all other actions, use the default behavior
         return super().get_object()
 
     def perform_create(self, serializer):
-        # Add retry logic to handle potential race conditions with ID generation
         max_attempts = 3
         attempt = 0
         
@@ -59,13 +52,12 @@ class Workforce_AllocationViewSet(viewsets.ModelViewSet):
             try:
                 allocation_id = f"ALLOC-{uuid.uuid4()}"
                 request_id = f"REQ-{uuid.uuid4()}"
-                serializer.save(allocation_id=allocation_id, request_id=request_id)
+                serializer.save(allocation_id = allocation_id, request_i = request_id)
                 break
             except IntegrityError:
-                # If we get a duplicate key, try again with new UUIDs
                 attempt += 1
                 if attempt == max_attempts:
-                    raise  # Re-raise the exception if we've tried too many times
+                    raise
 
     def perform_update(self, serializer):
         serializer.save()
@@ -77,26 +69,25 @@ class Workforce_AllocationViewSet(viewsets.ModelViewSet):
             return Workforce_Allocation_RequestSerializer
         return Workforce_Allocation_Serializer
 
-
-    @action(detail=True, methods=['post'])
-    def archive(self, request, allocation_id=None):
+    @action(detail = True, methods = ['post'])
+    def archive(self, request, allocation_id = None):
         workforce_allocation = self.get_object()
         if workforce_allocation.is_archived:
-            return Response({"detail": "Workforce Allocation already archived."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Workforce Allocation already archived."}, status = status.HTTP_400_BAD_REQUEST)
         workforce_allocation.is_archived = True
         workforce_allocation.save()
-        return Response({"detail": "Workforce Allocation archived successfully."}, status=status.HTTP_200_OK)
+        return Response({"detail": "Workforce Allocation archived successfully."}, status = status.HTTP_200_OK)
     
-    @action(detail=True, methods=['post'])
-    def unarchive(self, request, allocation_id=None):
+    @action(detail = True, methods = ['post'])
+    def unarchive(self, request, allocation_id = None):
         workforce_allocation = self.get_object()
         if not workforce_allocation.is_archived:
-            return Response({"detail": "Workforce Allocation is not archived."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Workforce Allocation is not archived."}, status = status.HTTP_400_BAD_REQUEST)
         workforce_allocation.is_archived = False
         workforce_allocation.save()
-        return Response({"detail": "Workforce Allocation unarchived successfully."}, status=status.HTTP_200_OK)
+        return Response({"detail": "Workforce Allocation unarchived successfully."}, status = status.HTTP_200_OK)
 
-    @action(detail = False, methods=['get'])
+    @action(detail = False, methods = ['get'])
     def archived(self, request):
         archived_allocations = Workforce_Allocation.objects.filter(is_archived = True)
         serializer = self.get_serializer(archived_allocations, many = True)
@@ -107,5 +98,5 @@ class Workforce_AllocationViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data = request.data)
         serializer.is_valid(raise_exception = True)
         instance = serializer.save()
-        return Response(self.get_serializer(instance).data, status=status.HTTP_201_CREATED)
+        return Response(self.get_serializer(instance).data, status = status.HTTP_201_CREATED)
 

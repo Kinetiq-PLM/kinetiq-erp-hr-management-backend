@@ -12,7 +12,6 @@ from django.db import connection
 from decimal import Decimal
 
 class Job_Posting_Serializer(serializers.ModelSerializer):
-    
     dept_id = serializers.SerializerMethodField()
     position_id = serializers.SerializerMethodField()
     position_title = serializers.SerializerMethodField()
@@ -60,16 +59,16 @@ class Job_Posting_Serializer(serializers.ModelSerializer):
 
 class Job_Posting_CreateSerializer(serializers.ModelSerializer):
     dept_id = serializers.PrimaryKeyRelatedField(
-        queryset=Department.objects.all(),
-        source='dept'
+        queryset = Department.objects.all(),
+        source = 'dept'
     )
     position_id = serializers.PrimaryKeyRelatedField(
-        queryset=Position.objects.all(),  
-        source='position'
+        queryset = Position.objects.all(),  
+        source = 'position'
     )
-    base_salary = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
-    daily_rate = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
-    duration_days = serializers.IntegerField(required=False, allow_null=True)
+    base_salary = serializers.DecimalField(max_digits = 10, decimal_places = 2, required = False, allow_null = True)
+    daily_rate = serializers.DecimalField(max_digits = 10, decimal_places = 2, required = False, allow_null = True)
+    duration_days = serializers.IntegerField(required = False, allow_null = True)
     
     class Meta:
         model = Job_Posting
@@ -87,54 +86,34 @@ class Job_Posting_CreateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, data):
-        """
-        Enhanced validation with better error messages
-        """
-        # Get employment type
         employment_type = data.get('employment_type')
         base_salary = data.get('base_salary')
         daily_rate = data.get('daily_rate')
         duration_days = data.get('duration_days')
-        
-        # Print for debugging - remove in production
-        print(f"Validating job posting: employment_type={employment_type}, base_salary={base_salary}, daily_rate={daily_rate}, duration_days={duration_days}")
-        
-        # Enforce compensation rules based on employment type
+                
         if employment_type == 'Regular':
-            # Check for base_salary - empty string or None is invalid for Regular
             if base_salary is None or (isinstance(base_salary, str) and not base_salary.strip()):
                 raise serializers.ValidationError({"base_salary": ["Base salary is required for Regular positions"]})
-            # Set daily_rate to NULL for Regular employees
             data['daily_rate'] = None
-            # For Regular positions, duration_days must be NULL
             data['duration_days'] = None
         elif employment_type == 'Contractual':
-            # Check for daily_rate - empty string or None is invalid for Contractual
             if daily_rate is None or (isinstance(daily_rate, str) and not daily_rate.strip()):
                 raise serializers.ValidationError({"daily_rate": ["Daily rate is required for Contractual positions"]})
-            # Set base_salary to NULL for Contractual employees
             data['base_salary'] = None
-            # Validate duration_days for Contractual (30-180 days)
             if duration_days is None or duration_days < 30 or duration_days > 180:
                 raise serializers.ValidationError({"duration_days": ["Contractual positions require duration between 30 and 180 days"]})
         elif employment_type == 'Seasonal':
-            # Check for daily_rate - empty string or None is invalid for Seasonal
             if daily_rate is None or (isinstance(daily_rate, str) and not daily_rate.strip()):
                 raise serializers.ValidationError({"daily_rate": ["Daily rate is required for Seasonal positions"]})
-            # Set base_salary to NULL for Seasonal employees
             data['base_salary'] = None
-            # Validate duration_days for Seasonal (1-29 days)
             if duration_days is None or duration_days < 1 or duration_days > 29:
                 raise serializers.ValidationError({"duration_days": ["Seasonal positions require duration between 1 and 29 days"]})
         else:
-            # If someone sends an invalid employment type
             raise serializers.ValidationError({"employment_type": [f"Invalid employment type: {employment_type}. Must be Regular, Contractual, or Seasonal."]})
         
-        # Ensure posting_status has a default value
         if data.get('posting_status') is None:
             data['posting_status'] = 'Draft'
         
-        # Validate required fields
         required_fields = ['description', 'requirements']
         missing_fields = [field for field in required_fields if not data.get(field)]
         if missing_fields:
@@ -143,35 +122,24 @@ class Job_Posting_CreateSerializer(serializers.ModelSerializer):
         return data       
     
     def create(self, validated_data):
-        """
-        Enhanced create method with error handling
-        """
         try:
-            # Generate job ID if not provided
             if not validated_data.get('job_id'):
                 validated_data['job_id'] = Job_Posting.generate_job_id()
                 
-            # Ensure position_title is set if not provided
             if not validated_data.get('position_title') and validated_data.get('position'):
                 validated_data['position_title'] = validated_data['position'].position_title
             
-            # Print for debugging - remove in production
             print(f"Creating job posting with data: {validated_data}")
                 
             return super().create(validated_data)
         except Exception as e:
-            # Log the error - in production you'd use a proper logger
             print(f"Error creating job posting: {str(e)}")
             raise serializers.ValidationError(f"Error creating job posting: {str(e)}")
 
     def update(self, instance, validated_data):
-        """
-        Enhanced update method to handle salary fields properly
-        """
         try:
             print(f"Updating job posting with data: {validated_data}")
             
-            # Handle department and position specially
             dept = validated_data.pop('dept', None)
             if dept:
                 instance.dept = dept
@@ -179,44 +147,34 @@ class Job_Posting_CreateSerializer(serializers.ModelSerializer):
             position = validated_data.pop('position', None)
             if position:
                 instance.position = position
-                # Also update position_title if not explicitly provided
                 if not validated_data.get('position_title'):
                     instance.position_title = position.position_title
             
-            # Get employment type from validated data or use existing one
             employment_type = validated_data.get('employment_type', instance.employment_type)
             
-            # Handle salary fields based on employment type - FIXED SECTION
             if employment_type == 'Regular':
-                # Directly access and set base_salary from validated_data
                 base_salary = validated_data.get('base_salary')
                 if base_salary is not None:
                     instance.base_salary = base_salary
                     print(f"Setting base_salary to: {base_salary}")
-                # Clear other fields for Regular employment type
                 instance.daily_rate = None
                 instance.duration_days = None
             elif employment_type in ['Contractual', 'Seasonal']:
-                # For Contractual/Seasonal: set daily_rate, clear base_salary
                 daily_rate = validated_data.get('daily_rate')
                 if daily_rate is not None:
                     instance.daily_rate = daily_rate
                     print(f"Setting daily_rate to: {daily_rate}")
                 instance.base_salary = None
-                # Set duration days if provided
                 duration_days = validated_data.get('duration_days')
                 if duration_days is not None:
                     instance.duration_days = duration_days
                     print(f"Setting duration_days to: {duration_days}")
             
-            # Update all other fields
             for attr, value in validated_data.items():
-                if attr not in ['base_salary', 'daily_rate', 'duration_days']:  # Skip fields we already handled
+                if attr not in ['base_salary', 'daily_rate', 'duration_days']:
                     setattr(instance, attr, value)
             
-            # Save the updated instance
             instance.save()
-            # Force a refresh from the database to ensure we have the latest values
             instance.refresh_from_db()
             
             return instance
@@ -237,47 +195,35 @@ class Job_Posting_RequestSerializer(serializers.ModelSerializer):
             'duration_days',
             'posting_status',
         ]
-    base_salary = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
-    daily_rate = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
-    duration_days = serializers.IntegerField(required=False, allow_null=True)
+    base_salary = serializers.DecimalField(max_digits = 10, decimal_places = 2, required = False, allow_null = True)
+    daily_rate = serializers.DecimalField(max_digits = 10, decimal_places = 2, required = False, allow_null = True)
+    duration_days = serializers.IntegerField(required = False, allow_null = True)
     def validate(self, data):
-        """
-        Validate data according to employment type constraints
-        """
         employment_type = data.get('employment_type')
         base_salary = data.get('base_salary')
         daily_rate = data.get('daily_rate')
         duration_days = data.get('duration_days')
         
-        # Enforce compensation rules based on employment type
         if employment_type == 'Regular':
             if not base_salary:
                 raise serializers.ValidationError({"base_salary": ["Base salary is required for Regular positions"]})
-            # Set daily_rate to None for Regular employees
             data['daily_rate'] = None
-            # For Regular positions, duration_days must be NULL
             data['duration_days'] = None
         elif employment_type == 'Contractual':
             if not daily_rate:
                 raise serializers.ValidationError({"daily_rate": ["Daily rate is required for Contractual positions"]})
-            # Set base_salary to None for Contractual employees
             data['base_salary'] = None
-            # Validate duration_days for Contractual (30-180 days)
             if duration_days is None or duration_days < 30 or duration_days > 180:
                 raise serializers.ValidationError({"duration_days": ["Contractual positions require duration between 30 and 180 days"]})
         elif employment_type == 'Seasonal':
             if not daily_rate:
                 raise serializers.ValidationError({"daily_rate": ["Daily rate is required for Seasonal positions"]})
-            # Set base_salary to None for Seasonal employees
             data['base_salary'] = None
-            # Validate duration_days for Seasonal (1-29 days)
             if duration_days is None or duration_days < 1 or duration_days > 29:
                 raise serializers.ValidationError({"duration_days": ["Seasonal positions require duration between 1 and 29 days"]})
         else:
-            # If someone sends an invalid employment type
             raise serializers.ValidationError({"employment_type": [f"Invalid employment type: {employment_type}. Must be Regular, Contractual, or Seasonal."]})
         
-        # Ensure posting_status has a default value if not provided
         if data.get('posting_status') is None:
             data['posting_status'] = 'Draft'
             

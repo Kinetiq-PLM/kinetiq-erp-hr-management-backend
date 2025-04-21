@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Employee_Leave_Balance
 
 class Employee_Leave_Balance_Serializer(serializers.ModelSerializer):
-    employee_id = serializers.CharField(source='employee.employee_id', read_only=True)
+    employee_id = serializers.CharField(source='employee.employee_id', read_only = True)
     employee_name = serializers.SerializerMethodField()
 
     class Meta:

@@ -31,12 +31,12 @@ class Job_Posting(models.Model):
     description = models.TextField()
     requirements = models.TextField()
     employment_type = models.CharField(max_length = 20, choices = EMPLOYMENT_TYPES, default = 'Full-Time')
-    base_salary = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    daily_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    base_salary = models.DecimalField(max_digits = 10, decimal_places = 2, null = True, blank = True)
+    daily_rate = models.DecimalField(max_digits = 10, decimal_places = 2, null = True, blank = True)
     duration_days = models.PositiveSmallIntegerField(null = True, blank = True)
     finance_approval = models.ForeignKey(Employee, on_delete = models.SET_NULL, null = True, blank = True, related_name = 'approved_postings')
-    finance_approval_status = models.CharField(max_length=20, choices = FINANCE_APPROVAL_STATUSES, default = 'Pending')
-    posting_status = models.CharField(max_length=20, choices = POSTING_STATUSES, default = 'Draft')
+    finance_approval_status = models.CharField(max_length = 20, choices = FINANCE_APPROVAL_STATUSES, default = 'Pending')
+    posting_status = models.CharField(max_length = 20, choices = POSTING_STATUSES, default = 'Draft')
     created_at = models.DateTimeField(default = timezone.now)
     updated_at = models.DateTimeField(auto_now = True)
     is_archived = models.BooleanField(default = False)
@@ -60,5 +60,5 @@ class Job_Posting(models.Model):
         super(Job_Posting, self).save(*args, **kwargs)
         
     class Meta:
-        db_table = 'job_posting'  # Explicitly tell Django to use this table name
-        managed = False  # Since the table already exists in your database
+        db_table = 'job_posting'
+        managed = False

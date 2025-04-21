@@ -1,7 +1,11 @@
-from rest_framework import viewsets, permissions, status, filters
+from rest_framework import (
+    viewsets,
+    permissions,
+    status,
+    filters,
+)
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 from django.db import DatabaseError
 from .models import Employee_Salary
 from .serializers import (
@@ -9,6 +13,8 @@ from .serializers import (
     Employee_Salary_CreateSerializer
 )
 from employees.models import Employee
+from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied
 
 class IsHRMember(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -38,7 +44,6 @@ class EmployeeSalaryViewSet(viewsets.ModelViewSet):
         except DatabaseError as e:
             error_message = str(e)
             
-            # Foreign key constraint violation from labor_cost table
             if "violates foreign key constraint" in error_message and "labor_cost" in error_message:
                 raise ValidationError({
                     "non_field_errors": [
@@ -47,13 +52,11 @@ class EmployeeSalaryViewSet(viewsets.ModelViewSet):
                     ]
                 })
             
-            # Format trigger validation errors into user-friendly messages
             if "Regular employees must have a positive base salary" in error_message:
                 raise ValidationError({"base_salary": ["Regular employees must have a positive base salary."]})
             elif "Contractual/Seasonal employees must have a positive daily rate" in error_message:
                 raise ValidationError({"daily_rate": ["Contractual/Seasonal employees must have a positive daily rate."]})
             elif "Base salary must be within position's min/max range" in error_message:
-                # Get salary range info to provide a helpful error message
                 instance = self.get_object()
                 employee = instance.employee
                 try:
@@ -70,18 +73,14 @@ class EmployeeSalaryViewSet(viewsets.ModelViewSet):
             elif "Contractual/Seasonal employees should not have a base salary" in error_message:
                 raise ValidationError({"base_salary": ["Contractual/Seasonal employees should not have a base salary."]})
             else:
-                # For any other database errors
                 raise ValidationError({"non_field_errors": [f"Database error: {error_message}"]})
 
     def partial_update(self, request, *args, **kwargs):
-        # Handle specific validation for partial updates
         try:
-            # Get the salary instance and employee's employment type
             instance = self.get_object()
             employee = instance.employee
             employment_type = employee.employment_type
             
-            # Pre-validate based on employment type
             if employment_type == 'Regular':
                 if 'daily_rate' in request.data and request.data['daily_rate'] is not None:
                     raise ValidationError({"daily_rate": ["Regular employees should not have a daily rate."]})
@@ -89,7 +88,6 @@ class EmployeeSalaryViewSet(viewsets.ModelViewSet):
                     if request.data['base_salary'] is None or float(request.data['base_salary']) <= 0:
                         raise ValidationError({"base_salary": ["Regular employees must have a positive base salary."]})
                     
-                    # Check salary range if possible
                     try:
                         position = employee.position
                         base_salary = float(request.data['base_salary'])
@@ -98,7 +96,6 @@ class EmployeeSalaryViewSet(viewsets.ModelViewSet):
                                 "base_salary": [f"Base salary must be between {position.min_salary} and {position.max_salary} for this position."]
                             })
                     except AttributeError:
-                        # If we can't access position data, let the database trigger handle it
                         pass
             
             elif employment_type in ['Contractual', 'Seasonal']:
@@ -111,12 +108,10 @@ class EmployeeSalaryViewSet(viewsets.ModelViewSet):
             return super().partial_update(request, *args, **kwargs)
         
         except ValidationError:
-            # Re-raise validation errors
             raise
         except DatabaseError as e:
             error_message = str(e)
             
-            # Foreign key constraint violation from labor_cost table
             if "violates foreign key constraint" in error_message and "labor_cost" in error_message:
                 raise ValidationError({
                     "non_field_errors": [
@@ -125,23 +120,21 @@ class EmployeeSalaryViewSet(viewsets.ModelViewSet):
                     ]
                 })
                 
-            # Handle other database errors using existing update method handler
             return self.update(request, *args, **kwargs)
         except Exception as e:
-            # Catch any other unexpected errors
             raise ValidationError({"non_field_errors": [f"An error occurred: {str(e)}"]})
 
-    @action(detail=False, methods=['get'], url_path='history/(?P<employee_id>[^/.]+)')
-    def salary_history(self, request, employee_id=None):
-        salaries = self.queryset.filter(employee__employee_id=employee_id).order_by('-effective_date')
+    @action(detail = False, methods = ['get'], url_path = 'history/(?P<employee_id>[^/.]+)')
+    def salary_history(self, request, employee_id = None):
+        salaries = self.queryset.filter(employee__employee_id = employee_id).order_by('-effective_date')
         serializer = self.get_serializer(salaries, many=True)
         return Response(serializer.data)
     
-    @action(detail=False, methods=['get'], url_path='employee-type/(?P<employee_id>[^/.]+)')
-    def get_employee_type(self, request, employee_id=None):
+    @action(detail = False, methods = ['get'], url_path = 'employee-type/(?P<employee_id>[^/.]+)')
+    def get_employee_type(self, request, employee_id = None):
         """Get employee's employment type for frontend validation"""
         try:
-            employee = Employee.objects.get(employee_id=employee_id)
+            employee = Employee.objects.get(employee_id = employee_id)
             return Response({
                 "employee_id": employee_id,
                 "employment_type": employee.employment_type
@@ -149,5 +142,5 @@ class EmployeeSalaryViewSet(viewsets.ModelViewSet):
         except Employee.DoesNotExist:
             return Response(
                 {"error": "Employee not found"}, 
-                status=status.HTTP_404_NOT_FOUND
+                status = status.HTTP_404_NOT_FOUND
             )

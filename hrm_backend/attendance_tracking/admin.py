@@ -1,8 +1,5 @@
 from django.contrib import admin
 from .models import Attendance_Tracking
-from employees.models import Employee
-from departments.models import Department
-from django.contrib.admin import SimpleListFilter
 
 @admin.register(Attendance_Tracking)
 class Attendance_Tracking_Admin(admin.ModelAdmin):

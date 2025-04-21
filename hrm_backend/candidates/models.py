@@ -1,7 +1,6 @@
 from django.db import models
 from job_posting.models import Job_Posting
 from django.utils import timezone
-from rest_framework import serializers
 import uuid
 
 APPLICATION_STATUS_CHOICES = [
