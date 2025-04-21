@@ -54,7 +54,7 @@ class Workforce_AllocationAdmin(admin.ModelAdmin):
     get_approved_at.short_description = "Approved At"
 
     def get_employee_name(self, obj):
-        return f"{obj.employee.first_name} {obj.employee.last_name}"
+        return f"{obj.employee.first_name} {obj.employee.last_name}" if obj.employee else "-"
     get_employee_name.short_description = 'Employee Name'
 
 
