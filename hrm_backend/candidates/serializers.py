@@ -30,7 +30,6 @@ class Candidate_Serializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['candidate_id', 'created_at', 'updated_at']
     
-    # Add this method to get the job_id
     def get_job_id(self, obj):
         return obj.job.job_id if obj.job else None
 
