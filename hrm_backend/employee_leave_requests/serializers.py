@@ -8,7 +8,7 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
     employee_id = serializers.CharField(source='employee.employee_id')
     employee_name = serializers.SerializerMethodField()
     immediate_superior_name = serializers.SerializerMethodField()
-    management_approval_name = serializers.SerializerMethodField()
+    # management_approval_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Employee_Leave_Request
@@ -18,8 +18,8 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
             'employee_name',
             'immediate_superior_id',
             'immediate_superior_name',
-            'management_approval_id',
-            'management_approval_name',
+            # 'management_approval_id',
+            # 'management_approval_name',
             'leave_type',
             'start_date',
             'end_date',
@@ -44,14 +44,14 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
                 return "N/A"
         return "N/A"
 
-    def get_management_approval_name(self, obj):
-        if obj.management_approval_id:
-            try:
-                management_approval = Employee.objects.get(employee_id = obj.management_approval_id)
-                return f"{management_approval.first_name} {management_approval.last_name}"
-            except Employee.DoesNotExist:
-                return "N/A"
-        return "N/A"
+    # def get_management_approval_name(self, obj):
+    #     if obj.management_approval_id:
+    #         try:
+    #             management_approval = Employee.objects.get(employee_id = obj.management_approval_id)
+    #             return f"{management_approval.first_name} {management_approval.last_name}"
+    #         except Employee.DoesNotExist:
+    #             return "N/A"
+    #     return "N/A"
 
 class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
     employee_id = serializers.CharField(write_only = True, required = False)

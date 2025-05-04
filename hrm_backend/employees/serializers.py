@@ -9,7 +9,7 @@ from django.db import connection, transaction
 
 class Employee_Serializer(serializers.ModelSerializer):
     employee_id = serializers.CharField(read_only = True)
-    user_id = serializers.CharField(write_only = True, required = False, allow_blank = True)
+    # user_id = serializers.CharField(write_only = True, required = False, allow_blank = True)
     dept_id = serializers.CharField(write_only = True)
     position_id = serializers.CharField(write_only = True)
     first_name = serializers.CharField(max_length = 50, required = False)
@@ -37,7 +37,7 @@ class Employee_Serializer(serializers.ModelSerializer):
         model = Employee
         fields = [
             'employee_id',
-            'user_id',
+            # 'user_id',
             'dept_id',
             'dept_name',
             'position_id',
@@ -62,7 +62,7 @@ class Employee_Serializer(serializers.ModelSerializer):
     
         rep = {
             'employee_id': instance.employee_id,
-            'user_id': instance.user_id,
+            # 'user_id': instance.user_id,
             'dept_id': instance.dept.dept_id if instance.dept else None,
             'dept_name': instance.dept.dept_name if instance.dept else None,
             'position_id': instance.position.position_id if instance.position else None,
@@ -132,7 +132,7 @@ class Employee_Serializer(serializers.ModelSerializer):
         employment_type = validated_data.get('employment_type', 'Regular')
         status = validated_data.get('status', 'Active')
         is_supervisor = validated_data.get('is_supervisor', False)
-        user_id = validated_data.get('user_id', '')
+        # user_id = validated_data.get('user_id', '')
         
         if reports_to:
             with connection.cursor() as cursor:
@@ -164,14 +164,14 @@ class Employee_Serializer(serializers.ModelSerializer):
                     try:
                         cursor.execute("""
                             INSERT INTO human_resources.employees (
-                                employee_id, user_id, dept_id, position_id, first_name, last_name, phone,
+                                employee_id, dept_id, position_id, first_name, last_name, phone,
                                 employment_type, status, reports_to_id, is_supervisor, 
                                 created_at, updated_at, is_archived
                             ) VALUES (
                                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), FALSE
                             )
                         """, [
-                            employee_id, user_id, dept_id, position_id, first_name, last_name, phone,
+                            employee_id, dept_id, position_id, first_name, last_name, phone,
                             employment_type, status, reports_to, is_supervisor
                         ])
                     finally:

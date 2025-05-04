@@ -21,9 +21,9 @@ class Candidate_Serializer(serializers.ModelSerializer):
             'resume_path',
             'application_status',
             'documents',
-            'interview_details',
-            'offer_details',
-            'contract_details',
+            # 'interview_details',
+            # 'offer_details',
+            # 'contract_details',
             'created_at',
             'updated_at',
             'is_archived',
@@ -48,9 +48,9 @@ class Candidate_CreateSerializer(serializers.ModelSerializer):
             'resume_path',
             'application_status',
             'documents',
-            'interview_details',
-            'offer_details',
-            'contract_details',
+            # 'interview_details',
+            # 'offer_details',
+            # 'contract_details',
         ]
 
     def create(self, validated_data):
@@ -59,15 +59,12 @@ class Candidate_CreateSerializer(serializers.ModelSerializer):
         validated_data['job'] = job 
         validated_data['candidate_id'] = Candidate.generate_candidate_id()
         
-        # Handle documents field
         if 'documents' in validated_data and validated_data['documents'] is not None:
-            # If documents comes as a string, parse it
             if isinstance(validated_data['documents'], str):
                 import json
                 try:
                     validated_data['documents'] = json.loads(validated_data['documents'])
                 except json.JSONDecodeError:
-                    # If there's an error parsing, default to empty dict
                     validated_data['documents'] = {}
         
         return super().create(validated_data)
@@ -77,15 +74,12 @@ class Candidate_CreateSerializer(serializers.ModelSerializer):
         if job_id:
             instance.job = JobPosting.objects.get(job_id=job_id)
         
-        # Handle documents field
         if 'documents' in validated_data and validated_data['documents'] is not None:
-            # If documents comes as a string, parse it
             if isinstance(validated_data['documents'], str):
                 import json
                 try:
                     validated_data['documents'] = json.loads(validated_data['documents'])
                 except json.JSONDecodeError:
-                    # If there's an error parsing, retain the existing documents
                     validated_data.pop('documents')
         
         return super().update(instance, validated_data)
@@ -110,32 +104,32 @@ class DocumentsFieldSerializer(serializers.Serializer):
         required = False
     )
 
-class InterviewDetailSerializer(serializers.Serializer):
-    type = serializers.CharField()
-    date = serializers.DateTimeField()
-    interviewer_id = serializers.CharField(required = False, allow_null = True)
-    feedback = serializers.CharField(required = False, allow_blank = True, allow_null = True)
-    rating = serializers.FloatField(required = False, allow_null = True)
+# class InterviewDetailSerializer(serializers.Serializer):
+#     type = serializers.CharField()
+#     date = serializers.DateTimeField()
+#     interviewer_id = serializers.CharField(required = False, allow_null = True)
+#     feedback = serializers.CharField(required = False, allow_blank = True, allow_null = True)
+#     rating = serializers.FloatField(required = False, allow_null = True)
 
-    def to_representation(self, instance):
-        rep = super().to_representation(instance)
+#     def to_representation(self, instance):
+#         rep = super().to_representation(instance)
 
-        filtered_rep = {
-            key: value for key, value in rep.items()
-            if value not in [None, '', []]
-        }
+#         filtered_rep = {
+#             key: value for key, value in rep.items()
+#             if value not in [None, '', []]
+#         }
 
-        return filtered_rep
+#         return filtered_rep
 
-class OfferDetailSerializer(serializers.Serializer):
-    salary = serializers.FloatField()
-    position_id = serializers.CharField()
-    benefits = serializers.ListField(child = serializers.CharField())
-    start_date = serializers.DateField()
-    expiry_date = serializers.DateField()
+# class OfferDetailSerializer(serializers.Serializer):
+#     salary = serializers.FloatField()
+#     position_id = serializers.CharField()
+#     benefits = serializers.ListField(child = serializers.CharField())
+#     start_date = serializers.DateField()
+#     expiry_date = serializers.DateField()
 
-class ContractDetailSerializer(serializers.Serializer):
-    signed_date = serializers.DateField()
-    contract_path = serializers.CharField()
-    witness_id = serializers.CharField()
-    hr_approver_id = serializers.CharField()
+# class ContractDetailSerializer(serializers.Serializer):
+#     signed_date = serializers.DateField()
+#     contract_path = serializers.CharField()
+#     witness_id = serializers.CharField()
+#     hr_approver_id = serializers.CharField()

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),
     path('api/attendance_tracking/', include('attendance_tracking.urls', namespace = 'attendance_tracking')),
     path('api/calendar_dates/', include('calendar_dates.urls', namespace = 'calendar_dates')),
     path('api/candidates/', include('candidates.urls', namespace = 'candidates')),
@@ -19,7 +19,10 @@ urlpatterns = [
     path('api/payroll/', include('payroll.urls', namespace = 'payroll')),
     path('api/resignation/', include('resignation.urls', namespace = 'resignation')),
     path('api/workforce_allocation/', include('workforce_allocation.urls', namespace = 'workforce_allocation')),
-   
+    # new
+    path('api/overtime_requests/', include('overtime_requests.urls', namespace = 'overtime_requests')),
+    path('api/interviews/', include('interviews.urls', namespace = 'interviews')),
+    path('api/onboarding/', include('onboarding.urls', namespace = 'onboarding')),
     ]
 
 

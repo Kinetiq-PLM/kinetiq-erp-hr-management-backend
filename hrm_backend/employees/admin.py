@@ -9,7 +9,6 @@ from django.urls import reverse
 class Employee_Admin(admin.ModelAdmin):
     list_display = (
         'employee_id',
-        'user_id',
         'dept_id',
         'dept_name',
         'position_id',
@@ -27,7 +26,7 @@ class Employee_Admin(admin.ModelAdmin):
         'is_archived',
     )
 
-    list_filter = ('employment_type', 'status', 'is_supervisor')
+    list_filter = ('employee_id',   'employment_type', 'status', 'is_supervisor')
     search_fields = ('first_name', 'last_name', 'employee_id', 'phone')
     readonly_fields = ('employee_id', 'created_at', 'updated_at')
 

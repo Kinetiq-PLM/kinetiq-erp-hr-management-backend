@@ -34,7 +34,6 @@ class Job_Posting(models.Model):
     base_salary = models.DecimalField(max_digits = 10, decimal_places = 2, null = True, blank = True)
     daily_rate = models.DecimalField(max_digits = 10, decimal_places = 2, null = True, blank = True)
     duration_days = models.PositiveSmallIntegerField(null = True, blank = True)
-    finance_approval = models.ForeignKey(Employee, on_delete = models.SET_NULL, null = True, blank = True, related_name = 'approved_postings')
     finance_approval_status = models.CharField(max_length = 20, choices = FINANCE_APPROVAL_STATUSES, default = 'Pending')
     posting_status = models.CharField(max_length = 20, choices = POSTING_STATUSES, default = 'Draft')
     created_at = models.DateTimeField(default = timezone.now)
@@ -61,4 +60,6 @@ class Job_Posting(models.Model):
         
     class Meta:
         db_table = 'job_posting'
+        verbose_name = "Job Posting"
+        verbose_name_plural = "Job Posting"
         managed = False

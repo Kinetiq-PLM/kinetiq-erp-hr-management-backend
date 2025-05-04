@@ -1,12 +1,14 @@
 from django.db import models
-from django.apps import apps
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 from departments.models import Department
 from positions.models import Position
 from django.core.exceptions import ValidationError
 from datetime import date
 import uuid
 import re
+
+User = get_user_model()
 
 class Employee(models.Model):
     EMPLOYMENT_TYPES = [
@@ -17,7 +19,9 @@ class Employee(models.Model):
 
     STATUS_CHOICES = [
         ('Active', 'Active'),
-        ('Inactive', 'Inactive'),
+        ('On Leave', 'On Leave'),
+        ('Terminated', 'Terminated'),
+        ('Resigned', 'Resigned'),
     ]
 
     employee_id = models.CharField(
@@ -26,7 +30,7 @@ class Employee(models.Model):
         editable = False,
         unique = True,
     )
-    user_id = models.CharField(max_length = 255, blank = True, null = True)
+    # user = models.ForeignKey(User, on_delete = models.SET_NULL, blank = True, null = True)
     dept = models.ForeignKey(Department, on_delete = models.CASCADE, null = True, blank = True)
     position = models.ForeignKey(Position, on_delete = models.CASCADE, null = True, blank = True)
     first_name = models.CharField(max_length = 50)

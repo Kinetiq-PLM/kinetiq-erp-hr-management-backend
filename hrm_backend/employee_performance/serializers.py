@@ -24,7 +24,7 @@ class Employee_Performance_Serializer(serializers.ModelSerializer):
             'bonus_payment_month',
             'updated_at',
         ]
-        read_only_fields = fields  # read-only for display
+        read_only_fields = fields
 
     def get_employee_id(self, obj):
         return obj.employee.employee_id if obj.employee else None

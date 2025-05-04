@@ -12,11 +12,11 @@ class Workforce_Allocation_Serializer(serializers.ModelSerializer):
             'request_id',
             'requesting_dept_id',
             'current_dept_id',
-            'hr_approver',
             'employee_id',
             'employee_name',
             'required_skills',
             'task_description',
+            'hr_approver',
             'approval_status',
             'status',
             'start_date',
@@ -24,6 +24,7 @@ class Workforce_Allocation_Serializer(serializers.ModelSerializer):
             'rejection_reason',
             'submitted_at',
             'approved_at',
+            'updated_at',
         ]
         read_only_fields = [
             'allocation_id',

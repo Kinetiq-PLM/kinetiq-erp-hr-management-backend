@@ -9,7 +9,7 @@ class Employee_Leave_Request(models.Model):
     employee = models.ForeignKey('employees.Employee', on_delete = models.CASCADE)
     dept = models.ForeignKey('departments.Department', db_column = 'dept_id', on_delete = models.CASCADE)
     immediate_superior = models.ForeignKey("department_superiors.Department_Superior", on_delete = models.SET_NULL, null = True, blank = True, related_name = "approved_leaves")
-    management_approval = models.ForeignKey("department_superiors.Department_Superior", on_delete = models.SET_NULL, null = True, blank = True, related_name = "management_approved_leaves")
+    # management_approval = models.ForeignKey("department_superiors.Department_Superior", on_delete = models.SET_NULL, null = True, blank = True, related_name = "management_approved_leaves")
     leave_type = models.CharField(max_length = 20, 
         choices = [
         ('Sick', 'Sick'), 
@@ -29,8 +29,8 @@ class Employee_Leave_Request(models.Model):
         ("Pending", "Pending"), 
         ("Approved by Superior", "Approved by Superior"),
         ("Rejected by Superior", "Rejected by Superior"),
-        ("Approved by Management", "Approved by Management"),
-        ("Rejected by Management", "Rejected by Management"),
+        # ("Approved by Management", "Approved by Management"),
+        # ("Rejected by Management", "Rejected by Management"),
         ("Recorded in HRIS", "Recorded in HRIS"),
         ("Approved", "Approved"), 
         ("Rejected", "Rejected"),

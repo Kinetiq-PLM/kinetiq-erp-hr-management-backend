@@ -18,6 +18,8 @@ class Attendance_Tracking_Serializer(serializers.ModelSerializer):
             'late_hours',
             'undertime_hours',
             'is_holiday',
+            'holiday_type',
+            'work_hours',
             'created_at',
             'updated_at',
         ]

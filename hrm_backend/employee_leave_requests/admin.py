@@ -14,8 +14,8 @@ class Employee_Leave_RequestAdmin(admin.ModelAdmin):
         'get_dept_name',
         'get_immediate_superior_id',
         'get_immediate_superior_name',
-        'get_management_approval_id',
-        'get_management_approval_name',
+        # 'get_management_approval_id',
+        # 'get_management_approval_name',
         'leave_type',
         'start_date',
         'end_date',
@@ -39,6 +39,7 @@ class Employee_Leave_RequestAdmin(admin.ModelAdmin):
 
     def get_dept_id(self, obj):
         return obj.employee.dept.dept_id if obj.employee and obj.employee.dept else None
+    get_employee_name.short_description = 'Department ID'
 
     def get_dept_name(self, obj):
             try:
@@ -71,9 +72,9 @@ class Employee_Leave_RequestAdmin(admin.ModelAdmin):
         return "N/A"
     get_immediate_superior_name.short_description = "Immediate Superior Name"
 
-    def get_management_approval_id(self, obj):
-        return obj.management_approval.dept_superior_id if obj.management_approval else None
-    get_management_approval_id.short_description = "Management Approval ID"
+    # def get_management_approval_id(self, obj):
+    #     return obj.management_approval.dept_superior_id if obj.management_approval else None
+    # get_management_approval_id.short_description = "Management Approval ID"
 
     def get_form(self, request, obj = None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -83,13 +84,13 @@ class Employee_Leave_RequestAdmin(admin.ModelAdmin):
             form.base_fields['change_reason'].widget = forms.HiddenInput()
         return form
 
-    def get_management_approval_name(self, obj):
-        if obj.management_approval_id:
-            try:
-                management_approval = Employee.objects.get(employee_id = obj.management_approval_id)
-                return f"{management_approval.first_name} {management_approval.last_name}"
-            except Employee.DoesNotExist:
-                return "N/A"
-        return "N/A"
-    get_management_approval_name.short_description = "Management Approval Name"
+    # def get_management_approval_name(self, obj):
+    #     if obj.management_approval_id:
+    #         try:
+    #             management_approval = Employee.objects.get(employee_id = obj.management_approval_id)
+    #             return f"{management_approval.first_name} {management_approval.last_name}"
+    #         except Employee.DoesNotExist:
+    #             return "N/A"
+    #     return "N/A"
+    # get_management_approval_name.short_description = "Management Approval Name"
 
