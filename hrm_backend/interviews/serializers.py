@@ -3,27 +3,23 @@ from rest_framework import serializers
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 import uuid
+from django.db import connection
 
 class Interview_Serializer(serializers.ModelSerializer):
-    candidate_id = serializers.CharField(source='candidate.candidate_id', read_only=True)
-    candidate_name = serializers.SerializerMethodField(read_only=True)
-    job_id = serializers.CharField(source='job.job_id', read_only=True)
-    job_title = serializers.SerializerMethodField(read_only=True)
-    interviewer_id = serializers.CharField(source='interviewer.employee_id', read_only=True)
-    interviewer_name = serializers.SerializerMethodField(read_only=True)
+    # Add extra name fields for related objects
+    candidate_name = serializers.SerializerMethodField()
+    job_title = serializers.SerializerMethodField()
+    interviewer_name = serializers.SerializerMethodField()
     
     class Meta:
         model = Interview
         fields = [
             'interview_id', 
-            'candidate', 
-            'candidate_id', 
+            'candidate_id',
             'candidate_name',
-            'job', 
             'job_id', 
             'job_title',
             'interview_date', 
-            'interviewer', 
             'interviewer_id',
             'interviewer_name',
             'status', 
@@ -34,25 +30,89 @@ class Interview_Serializer(serializers.ModelSerializer):
             'is_archived'
         ]
         read_only_fields = ['created_at', 'updated_at']
-        extra_kwargs = {
-            'candidate': {'write_only': True},
-            'job': {'write_only': True},
-            'interviewer': {'write_only': True},
-        }
 
+    def get_direct_field_value(self, interview_id, field_name):
+        """Directly get a field value from the database for an interview"""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT {field_name} FROM human_resources.interviews WHERE interview_id = %s",
+                [interview_id]
+            )
+            result = cursor.fetchone()
+            if result:
+                return result[0]
+        return None
+
+    def get_candidate_id(self, obj):
+        """Get the candidate_id directly from database"""
+        return self.get_direct_field_value(obj.interview_id, 'candidate_id')
+        
+    def get_job_id(self, obj):
+        """Get the job_id directly from database"""
+        return self.get_direct_field_value(obj.interview_id, 'job_id')
+        
+    def get_interviewer_id(self, obj):
+        """Get the interviewer_id directly from database"""
+        return self.get_direct_field_value(obj.interview_id, 'interviewer_id')
+        
     def get_candidate_name(self, obj):
-        if obj.candidate:
-            return f"{obj.candidate.first_name} {obj.candidate.last_name}"
+        """Get candidate name using a direct database join query"""
+        candidate_id = obj.candidate_id_id if hasattr(obj, 'candidate_id_id') else self.get_candidate_id(obj)
+        if not candidate_id:
+            return None
+            
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT first_name, last_name 
+                FROM human_resources.candidates 
+                WHERE candidate_id = %s
+                """,
+                [candidate_id]
+            )
+            result = cursor.fetchone()
+            if result:
+                return f"{result[0]} {result[1]}"
         return None
-    
+        
     def get_job_title(self, obj):
-        if obj.job:
-            return obj.job.position_title
+        """Get job title using a direct database join query"""
+        job_id = obj.job_id_id if hasattr(obj, 'job_id_id') else self.get_job_id(obj)
+        if not job_id:
+            return None
+            
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT position_title 
+                FROM human_resources.job_posting 
+                WHERE job_id = %s
+                """,
+                [job_id]
+            )
+            result = cursor.fetchone()
+            if result:
+                return result[0]
         return None
-    
+        
     def get_interviewer_name(self, obj):
-        if obj.interviewer:
-            return f"{obj.interviewer.first_name} {obj.interviewer.last_name}"
+        """Get interviewer name using a direct database join query"""
+        interviewer_id = obj.interviewer_id_id if hasattr(obj, 'interviewer_id_id') else self.get_interviewer_id(obj)
+        if not interviewer_id:
+            return None
+            
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT first_name, last_name 
+                FROM human_resources.employees 
+                WHERE employee_id = %s
+                """,
+                [interviewer_id]
+            )
+            result = cursor.fetchone()
+            if result:
+                return f"{result[0]} {result[1]}"
         return None
 
     # Validations
@@ -64,7 +124,7 @@ class Interview_Serializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Generate unique ID if not provided
         if not validated_data.get('interview_id'):
-            validated_data['interview_id'] = f"INTV-{uuid.uuid4().hex[:8].upper()}"
+            validated_data['interview_id'] = f"INT-{timezone.now().year}-{uuid.uuid4().hex[:6]}"
         
         validated_data['created_at'] = timezone.now()
         validated_data['updated_at'] = timezone.now()
@@ -75,17 +135,12 @@ class Interview_Serializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
+        """Override to ensure we include our related data"""
         rep = super().to_representation(instance)
-        return {
-            'interview_id': rep.get('interview_id'),
-            'candidate': rep.get('candidate'),
-            'job': rep.get('job'),
-            'interview_date': rep.get('interview_date'),
-            'interviewer': rep.get('interviewer'),
-            'status': rep.get('status'),
-            'feedback': rep.get('feedback'),
-            'rating': rep.get('rating'),
-            'created_at': rep.get('created_at'),
-            'updated_at': rep.get('updated_at'),
-            'is_archived': rep.get('is_archived')
-        }
+        
+        # Add names as additional info
+        rep['candidate_name'] = self.get_candidate_name(instance)  
+        rep['job_title'] = self.get_job_title(instance)
+        rep['interviewer_name'] = self.get_interviewer_name(instance)
+        
+        return rep

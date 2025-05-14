@@ -3,10 +3,10 @@ from django.utils import timezone
 
 class Interview(models.Model):
     interview_id = models.CharField(primary_key=True, max_length=255)
-    candidate = models.ForeignKey('candidates.Candidate', models.DO_NOTHING, blank=True, null=True)
-    job = models.ForeignKey('job_posting.Job_Posting', models.DO_NOTHING, blank=True, null=True)
+    candidate_id = models.ForeignKey('candidates.Candidate', models.DO_NOTHING, blank=True, null=True, db_column='candidate_id')
+    job_id = models.ForeignKey('job_posting.Job_Posting', models.DO_NOTHING, blank=True, null=True, db_column='job_id')
     interview_date = models.DateTimeField()
-    interviewer = models.ForeignKey('employees.Employee', models.DO_NOTHING, blank=True, null=True)
+    interviewer_id = models.ForeignKey('employees.Employee', models.DO_NOTHING, blank=True, null=True, db_column='interviewer_id')
     status = models.CharField(max_length=50, blank=True, null=True)
     feedback = models.TextField(blank=True, null=True)
     rating = models.SmallIntegerField(blank=True, null=True)
@@ -19,7 +19,7 @@ class Interview(models.Model):
         db_table = 'interviews'
 
     def __str__(self):
-        return f"Interview {self.interview_id} for Candidate {self.candidate.first_name if self.candidate else 'Unknown'}"
+        return f"Interview {self.interview_id} for Candidate {self.candidate_id.first_name if self.candidate_id else 'Unknown'}"
 
     def save(self, *args, **kwargs):
         if not self.updated_at:

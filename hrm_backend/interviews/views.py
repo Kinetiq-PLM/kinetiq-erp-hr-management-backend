@@ -6,7 +6,7 @@ from .models import Interview
 from .serializers import Interview_Serializer
 from django.utils import timezone
 import uuid
-from django.db import transaction
+from django.db import transaction, connection
 from rest_framework.exceptions import ValidationError
 
 class Interview_ViewSet(viewsets.ModelViewSet):
@@ -22,7 +22,6 @@ class Interview_ViewSet(viewsets.ModelViewSet):
         Get queryset with optional filters
         """
         queryset = Interview.objects.all().order_by('-interview_date')
-        
         # Add filtering options
         is_archived = self.request.query_params.get('is_archived', None)
         status_filter = self.request.query_params.get('status', None)
@@ -36,64 +35,92 @@ class Interview_ViewSet(viewsets.ModelViewSet):
         
         if status_filter:
             queryset = queryset.filter(status=status_filter)
-            
+        
         if candidate_id:
-            queryset = queryset.filter(candidate__candidate_id=candidate_id)
+            queryset = queryset.filter(candidate_id=candidate_id)
             
         if job_id:
-            queryset = queryset.filter(job__job_id=job_id)
+            queryset = queryset.filter(job_id=job_id)
             
         if interviewer_id:
-            queryset = queryset.filter(interviewer__employee_id=interviewer_id)
+            queryset = queryset.filter(interviewer_id=interviewer_id)
             
         return queryset
-
+        
+    def list(self, request, *args, **kwargs):
+        """Override list to ensure we properly serialize foreign keys"""
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+            
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
     def retrieve(self, request, *args, **kwargs):
-        """
-        Get a specific interview
-        """
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
+        """Override retrieve to ensure we properly serialize foreign keys"""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
-    @transaction.atomic
+    @action(detail=True, methods=['post'])
+    def archive(self, request, interview_id=None):
+        """Archive an interview"""
+        interview = self.get_object()
+        interview.is_archived = True
+        interview.save()
+        return Response({"status": "Interview archived"}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'])
+    def unarchive(self, request, interview_id=None):
+        """Unarchive an interview"""
+        interview = self.get_object()
+        interview.is_archived = False
+        interview.save()
+        return Response({"status": "Interview unarchived"}, status=status.HTTP_200_OK)
+        
     def create(self, request, *args, **kwargs):
-        """
-        Create a new interview
-        """
+        """Create a new interview with proper error handling"""
         try:
-            # Generate a unique ID if not provided
-            if not request.data.get('interview_id'):
-                request.data['interview_id'] = f"INTV-{uuid.uuid4().hex[:8].upper()}"
+            with transaction.atomic():
+                # Generate UUID if not provided
+                if 'interview_id' not in request.data:
+                    request.data['interview_id'] = f"INT-{timezone.now().year}-{uuid.uuid4().hex[:6]}"
                 
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+                # Set created_at and updated_at
+                request.data['created_at'] = timezone.now()
+                request.data['updated_at'] = timezone.now()
+                request.data['is_archived'] = False
+                
+                serializer = self.get_serializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                self.perform_create(serializer)
+                headers = self.get_success_headers(serializer.data)
+                return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except ValidationError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    @transaction.atomic
+            return Response({"error": f"Failed to create interview: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
     def update(self, request, *args, **kwargs):
-        """
-        Update an existing interview
-        """
+        """Update an interview with proper error handling"""
         try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response(serializer.data)
+            with transaction.atomic():
+                # Set updated_at
+                request.data['updated_at'] = timezone.now()
+                
+                instance = self.get_object()
+                serializer = self.get_serializer(instance, data=request.data, partial=kwargs.get('partial', False))
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+                
+                return Response(serializer.data)
         except ValidationError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"Failed to update interview: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_create(self, serializer):
         serializer.save()
@@ -128,40 +155,6 @@ class Interview_ViewSet(viewsets.ModelViewSet):
             if instance.status == 'Rejected':
                 return Response({"detail": "Already rejected."}, status=status.HTTP_400_BAD_REQUEST)
             instance.status = 'Rejected'
-            instance.updated_at = timezone.now()
-            instance.save()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=['post'], url_path='archive')
-    def archive(self, request, interview_id=None):
-        """
-        Archive an interview
-        """
-        try:
-            instance = self.get_object()
-            if instance.is_archived:
-                return Response({"detail": "Already archived."}, status=status.HTTP_400_BAD_REQUEST)
-            instance.is_archived = True
-            instance.updated_at = timezone.now()
-            instance.save()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            
-    @action(detail=True, methods=['post'], url_path='unarchive')
-    def unarchive(self, request, interview_id=None):
-        """
-        Unarchive an interview
-        """
-        try:
-            instance = self.get_object()
-            if not instance.is_archived:
-                return Response({"detail": "Not archived."}, status=status.HTTP_400_BAD_REQUEST)
-            instance.is_archived = False
             instance.updated_at = timezone.now()
             instance.save()
             serializer = self.get_serializer(instance)
