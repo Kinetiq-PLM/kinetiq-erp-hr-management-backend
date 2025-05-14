@@ -5,7 +5,7 @@ from .views import Overtime_Requests_ViewSet
 app_name = 'overtime_requests'
 
 router = DefaultRouter()
-router.register(r'overtime_requests', Overtime_Requests_ViewSet, basename='overtime_requests')
+router.register(r'', Overtime_Requests_ViewSet, basename='overtime_requests')
 
 urlpatterns = [
     path('', include(router.urls)),
