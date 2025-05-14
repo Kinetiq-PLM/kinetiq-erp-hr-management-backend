@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import ResignationViewSet
 
 router = DefaultRouter()
-router.register(r'resignations', ResignationViewSet)
+router.register(r'', ResignationViewSet)
 
 app_name = 'resignation'
 

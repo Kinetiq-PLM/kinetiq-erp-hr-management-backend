@@ -4,7 +4,9 @@ from rest_framework import (
 )
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from .models import Resignation
+from employees.models import Employee
 from .serializers import (
     ResignationSerializer,
     ResignationCreateSerializer,
@@ -15,7 +17,7 @@ from rest_framework.permissions import IsAuthenticated
 class ResignationViewSet(viewsets.ModelViewSet):
     queryset = Resignation.objects.all()
     lookup_field = 'resignation_id'
-    # permission_classes = [IsAuthenticated, IsHRMember]
+    # permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
         if self.action == 'create':
