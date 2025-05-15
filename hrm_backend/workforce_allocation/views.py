@@ -52,7 +52,7 @@ class Workforce_AllocationViewSet(viewsets.ModelViewSet):
             try:
                 allocation_id = f"ALLOC-{uuid.uuid4()}"
                 request_id = f"REQ-{uuid.uuid4()}"
-                serializer.save(allocation_id = allocation_id, request_i = request_id)
+                serializer.save(allocation_id = allocation_id, request_id = request_id)
                 break
             except IntegrityError:
                 attempt += 1

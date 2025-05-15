@@ -8,7 +8,6 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
     employee_id = serializers.CharField(source='employee.employee_id')
     employee_name = serializers.SerializerMethodField()
     immediate_superior_name = serializers.SerializerMethodField()
-    # management_approval_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Employee_Leave_Request
@@ -18,8 +17,6 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
             'employee_name',
             'immediate_superior_id',
             'immediate_superior_name',
-            # 'management_approval_id',
-            # 'management_approval_name',
             'leave_type',
             'start_date',
             'end_date',
@@ -44,26 +41,15 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
                 return "N/A"
         return "N/A"
 
-    # def get_management_approval_name(self, obj):
-    #     if obj.management_approval_id:
-    #         try:
-    #             management_approval = Employee.objects.get(employee_id = obj.management_approval_id)
-    #             return f"{management_approval.first_name} {management_approval.last_name}"
-    #         except Employee.DoesNotExist:
-    #             return "N/A"
-    #     return "N/A"
-
 class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
     employee_id = serializers.CharField(write_only = True, required = False)
     immediate_superior_id = serializers.CharField(required = False, allow_null = True, allow_blank = True, write_only = True)
-    management_approval_id = serializers.CharField(required = False, allow_null = True, allow_blank = True, write_only = True)
 
     class Meta:
         model = Employee_Leave_Request
         fields = [
             'employee_id',
             'immediate_superior_id',
-            'management_approval_id',
             'leave_type',
             'start_date',
             'end_date',
@@ -135,7 +121,6 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
             total_days = delta.days + 1
         
         immediate_superior_id = validated_data.pop('immediate_superior_id', None)
-        management_approval_id = validated_data.pop('management_approval_id', None)
         
         try:
             return Employee_Leave_Request.objects.create(
@@ -143,7 +128,6 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
                 dept = dept,
                 total_days = total_days,
                 immediate_superior_id = immediate_superior_id,
-                management_approval_id = management_approval_id,
                 **validated_data
             )
         except Exception as e:
@@ -159,10 +143,6 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
         immediate_superior_id = validated_data.pop('immediate_superior_id', None)
         if immediate_superior_id is not None:
             instance.immediate_superior_id = immediate_superior_id
-            
-        management_approval_id = validated_data.pop('management_approval_id', None)
-        if management_approval_id is not None: 
-            instance.management_approval_id = management_approval_id
             
         start_date = validated_data.get('start_date', instance.start_date)
         end_date = validated_data.get('end_date', instance.end_date)
