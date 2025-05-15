@@ -14,9 +14,12 @@ class Resignation(models.Model):
     documents = models.JSONField(null = True, blank = True)
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
+    documents = models.JSONField(blank = True, null = True)
+    reason = models.TextField(blank = True, null = True)
 
     def __str__(self):
         return self.resignation_id
     
     class Meta:
         db_table = "resignations"
+        managed = False

@@ -3,6 +3,8 @@ from employees.models import Employee
 from rest_framework import serializers
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
+import uuid
+from django.db import connection
 
 class Interview_Serializer(serializers.ModelSerializer):
     interviewer_name = serializers.SerializerMethodField()
@@ -36,7 +38,21 @@ class Interview_Serializer(serializers.ModelSerializer):
             raise ValidationError("Interview date cannot be in the past.")
         return value
 
+    def create(self, validated_data):
+        # Generate unique ID if not provided
+        if not validated_data.get('interview_id'):
+            validated_data['interview_id'] = f"INT-{timezone.now().year}-{uuid.uuid4().hex[:6]}"
+        
+        validated_data['created_at'] = timezone.now()
+        validated_data['updated_at'] = timezone.now()
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data['updated_at'] = timezone.now()
+        return super().update(instance, validated_data)
+
     def to_representation(self, instance):
+        """Override to ensure we include our related data"""
         rep = super().to_representation(instance)
         rep = {
             'interview_id': rep.get('interview_id'),

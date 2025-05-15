@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Resignation
+from employees.models import Employee
 
 class ResignationSerializer(serializers.ModelSerializer):
     employee_name = serializers.SerializerMethodField()
@@ -28,6 +29,8 @@ class ResignationSerializer(serializers.ModelSerializer):
             'documents',
             'created_at',
             'updated_at',
+            'documents',
+            'reason',
         ]
         read_only_fields = ['resignation_id', 'created_at', 'updated_at']
 
@@ -43,6 +46,8 @@ class ResignationCreateSerializer(serializers.ModelSerializer):
             'documents',
             'submission_date',
             'clearance_status',
+            'documents',
+            'reason',
         ]
 
 class ResignationUpdateSerializer(serializers.ModelSerializer):

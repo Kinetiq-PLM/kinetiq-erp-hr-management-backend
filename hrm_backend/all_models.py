@@ -36,6 +36,8 @@ class AttendanceTracking(models.Model):
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
     calendar_date = models.ForeignKey('CalendarDates', models.DO_NOTHING, related_name='attendancetracking_calendar_date_set', blank=True, null=True)
+    overtime_hours = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    work_hours_backup = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -145,9 +147,6 @@ class Candidates(models.Model):
     resume_path = models.TextField(blank=True, null=True)
     application_status = models.CharField(max_length=50, blank=True, null=True)
     documents = models.JSONField(blank=True, null=True)
-    interview_details = models.JSONField(blank=True, null=True)
-    offer_details = models.JSONField(blank=True, null=True)
-    contract_details = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
     is_archived = models.BooleanField(blank=True, null=True)
@@ -349,7 +348,6 @@ class EmployeeSalary(models.Model):
 
 class Employees(models.Model):
     employee_id = models.CharField(primary_key=True, max_length=255)
-    user_id = models.CharField(max_length=255, blank=True, null=True)
     dept = models.ForeignKey(Departments, models.DO_NOTHING, blank=True, null=True)
     position = models.ForeignKey('Positions', models.DO_NOTHING, blank=True, null=True)
     first_name = models.CharField(max_length=50, blank=True, null=True)
@@ -357,11 +355,14 @@ class Employees(models.Model):
     phone = models.CharField(max_length=20, blank=True, null=True)
     employment_type = models.CharField(max_length=20, blank=True, null=True)
     status = models.CharField(max_length=20, blank=True, null=True)
-    reports_to = models.ForeignKey('self', models.DO_NOTHING, db_column='reports_to', blank=True, null=True)
+    reports_to = models.ForeignKey('self', models.DO_NOTHING, blank=True, null=True)
     is_supervisor = models.BooleanField(blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
     is_archived = models.BooleanField(blank=True, null=True)
+    documents = models.JSONField(blank=True, null=True)
+    id_card_photo = models.CharField(max_length=100, blank=True, null=True)
+    photo = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -434,6 +435,24 @@ class GeneralLedgerAccounts(models.Model):
         db_table = 'general_ledger_accounts'
 
 
+class Interviews(models.Model):
+    interview_id = models.CharField(primary_key=True, max_length=255)
+    candidate = models.ForeignKey(Candidates, models.DO_NOTHING, blank=True, null=True)
+    job = models.ForeignKey('JobPosting', models.DO_NOTHING, blank=True, null=True)
+    interview_date = models.DateTimeField()
+    interviewer = models.ForeignKey(Employees, models.DO_NOTHING, blank=True, null=True)
+    status = models.CharField(max_length=50, blank=True, null=True)
+    feedback = models.TextField(blank=True, null=True)
+    rating = models.SmallIntegerField(blank=True, null=True)
+    created_at = models.DateTimeField(blank=True, null=True)
+    updated_at = models.DateTimeField(blank=True, null=True)
+    is_archived = models.BooleanField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'interviews'
+
+
 class JobPosting(models.Model):
     job_id = models.CharField(primary_key=True, max_length=255)
     dept = models.ForeignKey(Departments, models.DO_NOTHING, blank=True, null=True)
@@ -445,7 +464,6 @@ class JobPosting(models.Model):
     base_salary = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     daily_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     duration_days = models.SmallIntegerField(blank=True, null=True)
-    finance_approval_id = models.CharField(max_length=255, blank=True, null=True)
     finance_approval_status = models.CharField(max_length=20, blank=True, null=True)
     posting_status = models.CharField(max_length=30, blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
@@ -501,7 +519,6 @@ class LeaveRequests(models.Model):
     employee = models.ForeignKey(Employees, models.DO_NOTHING, blank=True, null=True)
     dept = models.ForeignKey(Departments, models.DO_NOTHING, blank=True, null=True)
     immediate_superior = models.ForeignKey(Employees, models.DO_NOTHING, related_name='leaverequests_immediate_superior_set', blank=True, null=True)
-    management_approval_id = models.CharField(max_length=255, blank=True, null=True)
     leave_type = models.CharField(max_length=20, blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
@@ -511,10 +528,42 @@ class LeaveRequests(models.Model):
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
     is_archived = models.BooleanField(blank=True, null=True)
+    reason = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'leave_requests'
+
+
+class Onboarding(models.Model):
+    onboarding_id = models.CharField(primary_key=True, max_length=255)
+    candidate = models.ForeignKey(Candidates, models.DO_NOTHING, blank=True, null=True)
+    job = models.ForeignKey(JobPosting, models.DO_NOTHING, blank=True, null=True)
+    offer_details = models.JSONField(blank=True, null=True)
+    contract_details = models.JSONField(blank=True, null=True)
+    status = models.CharField(max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(blank=True, null=True)
+    updated_at = models.DateTimeField(blank=True, null=True)
+    is_archived = models.BooleanField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'onboarding'
+
+
+class OvertimeRequests(models.Model):
+    request_id = models.CharField(primary_key=True, max_length=50)
+    employee = models.ForeignKey(Employees, models.DO_NOTHING, blank=True, null=True)
+    request_date = models.DateField()
+    overtime_hours = models.DecimalField(max_digits=5, decimal_places=2)
+    reason = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, blank=True, null=True)
+    approved_by = models.CharField(max_length=255, blank=True, null=True)
+    approval_date = models.DateField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'overtime_requests'
 
 
 class Payroll(models.Model):
@@ -622,32 +671,16 @@ class PurchaseOrderShipment(models.Model):
         db_table = 'purchase_order_shipment'
 
 
-class ResignationResignation(models.Model):
-    resignation_id = models.CharField(primary_key=True, max_length=255)
-    employee_id = models.CharField(max_length=255)
-    submission_date = models.DateTimeField()
-    notice_period_days = models.IntegerField()
-    hr_approver_id = models.CharField(max_length=255, blank=True, null=True)
-    approval_status = models.CharField(max_length=20)
-    clearance_status = models.CharField(max_length=20)
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'resignation_resignation'
-
-
 class Resignations(models.Model):
     resignation_id = models.CharField(primary_key=True, max_length=255)
-    employee = models.ForeignKey(Employees, models.DO_NOTHING)
     submission_date = models.DateTimeField(blank=True, null=True)
     notice_period_days = models.IntegerField(blank=True, null=True)
-    hr_approver = models.ForeignKey(Employees, models.DO_NOTHING, related_name='resignations_hr_approver_set', blank=True, null=True)
-    approval_status = models.CharField(max_length=20, blank=True, null=True)
     clearance_status = models.CharField(max_length=20, blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
+    documents = models.JSONField(blank=True, null=True)
+    employee = models.ForeignKey(Employees, models.DO_NOTHING, blank=True, null=True)
+    reason = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -720,6 +753,7 @@ class WorkforceAllocation(models.Model):
     submitted_at = models.DateTimeField(blank=True, null=True)
     approved_at = models.DateTimeField(blank=True, null=True)
     is_archived = models.BooleanField(blank=True, null=True)
+    updated_at = models.DateTimeField()
 
     class Meta:
         managed = False
