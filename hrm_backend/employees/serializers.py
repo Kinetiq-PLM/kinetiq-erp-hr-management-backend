@@ -168,7 +168,7 @@ class Employee_Serializer(serializers.ModelSerializer):
                                 employment_type, status, reports_to_id, is_supervisor, 
                                 created_at, updated_at, is_archived
                             ) VALUES (
-                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), FALSE
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), FALSE
                             )
                         """, [
                             employee_id, dept_id, position_id, first_name, last_name, phone,
