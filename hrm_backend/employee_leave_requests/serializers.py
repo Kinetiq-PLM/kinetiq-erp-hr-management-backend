@@ -16,6 +16,7 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
             'leave_id',
             'employee_id',
             'employee_name',
+            'dept_id',
             'immediate_superior_id',
             'immediate_superior_name',
             # 'management_approval_id',

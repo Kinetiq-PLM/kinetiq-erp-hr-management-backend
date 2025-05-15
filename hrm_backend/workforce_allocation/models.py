@@ -7,7 +7,7 @@ class Workforce_Allocation(models.Model):
     requesting_dept_id = models.CharField(max_length = 255)
     required_skills = models.TextField()
     task_description = models.TextField()
-    updated_at = models.DateTimeField(auto_now = True)
+    # updated_at = models.DateTimeField(auto_now = True)
     employee = models.ForeignKey(
         Employee,
         on_delete=models.SET_NULL,

@@ -16,6 +16,5 @@ class Onboarding(models.Model):
     def __str__(self):
         return f"Onboarding {self.onboarding_id} - Candidate {self.candidate_id}"
 
-
     class Meta:
         db_table = "onboarding"

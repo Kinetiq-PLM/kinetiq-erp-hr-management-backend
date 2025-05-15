@@ -7,7 +7,7 @@ class Onboarding_Serializer(serializers.ModelSerializer):
         model = Onboarding
         fields = [
             'onboarding_id',
-            'candidate',
+            'candidate_id',
             'job',
             'offer_details',
             'contract_details',
@@ -17,6 +17,9 @@ class Onboarding_Serializer(serializers.ModelSerializer):
             'is_archived'
         ]
 
+    def get_candidate_id(self, obj):
+        return obj.candidate_id
+    
     def validate_onboarding_id(self, value):
         if Onboarding.objects.filter(onboarding_id = value).exists():
             raise ValidationError(f"Onboarding ID '{value}' already exists.")
@@ -26,7 +29,7 @@ class Onboarding_Serializer(serializers.ModelSerializer):
         rep = super().to_representation(instance)
         rep = {
             'onboarding_id': rep.get('onboarding_id'),
-            'candidate': rep.get('candidate'),
+            'candidate_id': rep.get('candidate_id'),
             'job': rep.get('job'),
             'offer_details': rep.get('offer_details'),
             'contract_details': rep.get('contract_details'),

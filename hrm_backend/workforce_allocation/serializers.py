@@ -24,7 +24,7 @@ class Workforce_Allocation_Serializer(serializers.ModelSerializer):
             'rejection_reason',
             'submitted_at',
             'approved_at',
-            'updated_at',
+            # 'updated_at',
         ]
         read_only_fields = [
             'allocation_id',
