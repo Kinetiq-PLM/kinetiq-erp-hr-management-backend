@@ -1,14 +1,17 @@
 from django.db import models
+from employees.models import Employee
 import uuid
 
 class Resignation(models.Model):
     resignation_id = models.CharField(max_length = 255, primary_key = True, default = uuid.uuid4, editable = False)
-    employee_id = models.CharField(max_length = 255)
+    employee = models.ForeignKey(Employee, on_delete = models.CASCADE, null = True, blank = True)
+    # employee_id = models.CharField(max_length = 255, unique = True)
     submission_date = models.DateTimeField(auto_now_add = True)
     notice_period_days = models.IntegerField()
-    hr_approver_id = models.CharField(max_length = 255, null = True, blank = True)
-    approval_status = models.CharField(max_length = 20, default = 'Pending')
+    # approval_status = models.CharField(max_length = 20, default = 'Pending')
     clearance_status = models.CharField(max_length = 20, default = 'Pending')
+    reason = models.TextField(null = True, blank = True)
+    documents = models.JSONField(null = True, blank = True)
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
 

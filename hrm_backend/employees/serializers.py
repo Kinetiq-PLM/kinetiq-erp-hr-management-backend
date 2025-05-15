@@ -4,6 +4,7 @@ from .models import (
     Department,
     Position,
 )
+from department_superiors.models import Department_Superior
 from rest_framework.exceptions import ValidationError
 from django.db import connection, transaction
 
@@ -19,13 +20,33 @@ class Employee_Serializer(serializers.ModelSerializer):
     status = serializers.CharField(max_length = 20, required = False)
     reports_to = serializers.PrimaryKeyRelatedField(queryset = Employee.objects.all(), allow_null = True)
     is_supervisor = serializers.BooleanField(required = False, allow_null = True)
-    
+    dept_superior_name = serializers.SerializerMethodField()
     dept_name = serializers.SerializerMethodField()
     position_name = serializers.SerializerMethodField()
     salary_grade = serializers.SerializerMethodField()
+    photo = serializers.ImageField(required=False, allow_null=True)
+    id_card_photo = serializers.ImageField(read_only=True)
+
     
     def get_dept_name(self, obj):
         return obj.dept.dept_name if obj.dept else None
+
+    def get_dept_superior_name(self, obj):
+        try:
+            dept_superior = Department_Superior.objects.filter(
+                dept=obj.dept,
+                is_archived=False
+            ).first()
+
+            if not dept_superior:
+                return None
+
+            emp = dept_superior.get_employee()
+            if emp:
+                return f"{emp.first_name} {emp.last_name}"
+            return None
+        except Exception:
+            return None
         
     def get_position_name(self, obj):
         return obj.position.position_title if obj.position else None
@@ -37,34 +58,52 @@ class Employee_Serializer(serializers.ModelSerializer):
         model = Employee
         fields = [
             'employee_id',
-            # 'user_id',
             'dept_id',
             'dept_name',
+            'dept_superior_name',
             'position_id',
             'position_name',
             'first_name',
             'last_name',
-            # 'email',
             'phone',
             'employment_type',
             'status',
             'reports_to',
             'salary_grade',
             'is_supervisor',
+            'photo',
+            'id_card_photo',
             'created_at',
             'updated_at',
             'is_archived',
         ]
+
         read_only_fields = ['employee_id']
     
     def to_representation(self, instance):
+        request = self.context.get('request')
+
+        if self.context['request'].method in ['PUT', 'PATCH']:
+            return {
+                'dept_name': instance.dept.dept_name if instance.dept else None,
+                'dept_superior_name': self.get_dept_superior_name(instance), 
+                'position_title': instance.position.position_title if instance.position else None,
+                'first_name': instance.first_name,
+                'last_name': instance.last_name,
+                'phone': instance.phone,
+                'status': instance.status,
+                'is_supervisor': instance.is_supervisor,
+                'reports_to': instance.reports_to.employee_id if instance.reports_to else None,
+                'is_archived': instance.is_archived,
+            }
+
         rep = super().to_representation(instance)
-    
-        rep = {
+
+        rep.update({
             'employee_id': instance.employee_id,
-            # 'user_id': instance.user_id,
             'dept_id': instance.dept.dept_id if instance.dept else None,
             'dept_name': instance.dept.dept_name if instance.dept else None,
+            'dept_superior_name': self.get_dept_superior_name(instance),
             'position_id': instance.position.position_id if instance.position else None,
             'position_title': instance.position.position_title if instance.position else None,
             'first_name': instance.first_name,
@@ -78,22 +117,20 @@ class Employee_Serializer(serializers.ModelSerializer):
             'created_at': instance.created_at,
             'updated_at': instance.updated_at,
             'is_archived': instance.is_archived,
-        }
-    
-        if self.context['request'].method in ['PUT', 'PATCH']:
-            rep = {
-                'dept_name': instance.dept.dept_name if instance.dept else None,
-                'position_title': instance.position.position_title if instance.position else None,
-                'first_name': instance.first_name,
-                'last_name': instance.last_name,
-                'phone': instance.phone,
-                'status': instance.status,
-                'is_supervisor': instance.is_supervisor,
-                'reports_to': instance.reports_to.employee_id if instance.reports_to else None,
-                'is_archived': instance.is_archived,
-            }
-    
+        })
+
+        if instance.photo and request:
+            rep['photo'] = request.build_absolute_uri(instance.photo.url)
+        else:
+            rep['photo'] = None
+
+        if instance.id_card_photo and request:
+            rep['id_card_photo'] = request.build_absolute_uri(instance.id_card_photo.url)
+        else:
+            rep['id_card_photo'] = None
+
         return rep
+
 
     def create(self, validated_data):
         dept_id = validated_data.pop('dept_id', None)

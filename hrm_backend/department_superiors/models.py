@@ -15,9 +15,7 @@ class Department_Superior(models.Model):
         default = ''
     )
     dept = models.ForeignKey(Department, db_column = 'dept_id', on_delete = models.CASCADE)
-
     position = models.ForeignKey('positions.Position', db_column = 'position_id', on_delete = models.DO_NOTHING, blank = True, null = True)
-    
     hierarchy_level = models.PositiveIntegerField()
     is_archived = models.BooleanField(default = False)
  

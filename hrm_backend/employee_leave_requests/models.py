@@ -21,6 +21,7 @@ class Employee_Leave_Request(models.Model):
         ('Unpaid', 'Unpaid')
     ])
     start_date = models.DateField()
+    reason = models.TextField(blank = True, null = True)
     end_date = models.DateField()
     total_days = models.IntegerField(null = True, blank = True)
     is_paid = models.BooleanField(default = True)

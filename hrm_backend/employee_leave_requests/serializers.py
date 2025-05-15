@@ -25,6 +25,7 @@ class Employee_Leave_Request_Serializer(serializers.ModelSerializer):
             'end_date',
             'total_days',
             'is_paid',
+            'reason',
             'status',
             'created_at',
             'updated_at',
@@ -68,6 +69,7 @@ class Employee_Leave_Request_CreateSerializer(serializers.ModelSerializer):
             'start_date',
             'end_date',
             'is_paid',
+            'reason',
             'status',
         ]
 

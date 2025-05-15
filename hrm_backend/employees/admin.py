@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Employee
+from department_superiors.models import Department_Superior
 from django import forms
 from datetime import date
 import uuid
@@ -11,6 +12,7 @@ class Employee_Admin(admin.ModelAdmin):
         'employee_id',
         'dept_id',
         'dept_name',
+        'dept_superior_name',
         'position_id',
         'position_title',
         'first_name',
@@ -28,13 +30,22 @@ class Employee_Admin(admin.ModelAdmin):
 
     list_filter = ('employee_id',   'employment_type', 'status', 'is_supervisor')
     search_fields = ('first_name', 'last_name', 'employee_id', 'phone')
-    readonly_fields = ('employee_id', 'created_at', 'updated_at')
+    readonly_fields = ('employee_id', 'created_at', 'updated_at', 'id_card_photo')
 
     def department(self, obj):
         return obj.dept.dept_name if obj.dept else 'N/A'
     
     def dept_name(self, obj):
         return obj.dept.dept_name if obj.dept else 'N/A'
+    
+    def dept_superior_name(self, obj):
+        dept_superior = Department_Superior.objects.filter(dept=obj.dept, is_archived=False).first()
+        if dept_superior:
+            emp = dept_superior.get_employee()
+            if emp:
+                return f"{emp.first_name} {emp.last_name}"
+        return 'N/A'
+    dept_superior_name.short_description = 'Dept. Superior'
 
     def position(self, obj):
         return obj.position.position_title if obj.position else 'N/A'

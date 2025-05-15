@@ -1,0 +1,78 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+
+{% block title %}
+Employee Attendance | Scan Card
+{% endblock title %}
+
+{% block head %}
+<style>
+#html5-qrcode-button-camera-permission {
+    background-color: blue;
+    color: white;
+    padding: 5px 8px;
+    border-radius: 20px;
+}
+</style>
+{% endblock head %}
+
+{% block content %}
+<div class="flex flex-col h-screen justify-center items-center">
+<h1 class="text-2xl text-center py-6">SCAN YOUR ID CARD</h1>
+    <div class="w-[500px] h-min p-6 bg-white border border-gray-200 rounded-lg shadow ">
+        <div id="reader" width="600px"></div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block js %}
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script
+  src="https://code.jquery.com/jquery-3.7.1.min.js"
+  integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+  crossorigin="anonymous"></script>
+<script>
+
+let scanInProgress = false;
+
+function onScanSuccess(decodedText, decodedResult) {
+  if (scanInProgress) return;
+
+  scanInProgress = true;
+
+  $.ajax({
+    type: "POST",
+    url: "{% url 'attendance_tracking:attendance' %}",
+    data: {
+      text: decodedText,
+      csrfmiddlewaretoken: '{{ csrf_token }}'
+    },
+    success: function(response) {
+      if (response.success) {
+        window.location.href = response.redirect_url || "{% url 'attendance_tracking:attendance_marked' %}";
+      } else {
+        alert(response.message || "Unknown error occurred");
+        scanInProgress = false; // Allow another scan
+      }
+    },
+    error: function(xhr, status, error) {
+      console.error("Error marking attendance:", error);
+      alert("Error marking attendance. Please try again.");
+      scanInProgress = false; // Allow another scan
+    }
+  });
+}
+
+
+function onScanFailure(error) {
+  // handle scan failure, usually better to ignore and keep scanning.
+  // for example:
+}
+
+let html5QrcodeScanner = new Html5QrcodeScanner(
+  "reader",
+  { fps: 10, qrbox: {width: 250, height: 250} },
+  /* verbose= */ false);
+html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+</script>
+{% endblock js %}

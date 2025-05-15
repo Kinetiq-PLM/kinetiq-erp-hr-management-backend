@@ -1,13 +1,35 @@
 from .models import Interview
+from employees.models import Employee
 from rest_framework import serializers
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 class Interview_Serializer(serializers.ModelSerializer):
+    interviewer_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Interview
-        fields = ['interview_id', 'candidate_id', 'job_id', 'interview_date', 'status', 'feedback', 'rating', 'created_at', 'updated_at', 'is_archived']
+        fields = [
+            'interview_id',
+            'candidate_id',
+            'job_id',
+            'interviewer',
+            'interviewer_id',
+            'interviewer_name',
+            'interview_date',
+            'status',
+            'feedback',
+            'rating',
+            'created_at',
+            'updated_at',
+            'is_archived',
+        ]
 
+    def get_interviewer_name(self, obj):
+        if obj.interviewer:
+            return f"{obj.interviewer.first_name} {obj.interviewer.last_name}"
+        return "No Interviewer"
+    
     # Validations
     def validate_interview_date(self, value):
         if value < timezone.now():
@@ -20,6 +42,8 @@ class Interview_Serializer(serializers.ModelSerializer):
             'interview_id': rep.get('interview_id'),
             'candidate_id': rep.get('candidate_id'),
             'job_id': rep.get('job_id'),
+            'interviewer_id': rep.get('interviewer_id'),
+            'interviewer_name': rep.get('interviewer_name'),
             'interview_date': rep.get('interview_date'),
             'status': rep.get('status'),
             'feedback': rep.get('feedback'),
